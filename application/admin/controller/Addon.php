@@ -23,6 +23,9 @@ class Addon extends Backend
     public function _initialize()
     {
         parent::_initialize();
+        if (!$this->auth->isSuperAdmin() && in_array($this->request->action(), ['install', 'uninstall', 'local', 'upgrade'])) {
+            $this->error(__('Access is allowed only to the super management group'));
+        }
     }
 
     /**
@@ -43,11 +46,11 @@ class Addon extends Backend
     /**
      * 配置
      */
-    public function config($ids = null)
+    public function config($name = null)
     {
-        $name = $this->request->get("name");
+        $name = $name ? $name : $this->request->get("name");
         if (!$name) {
-            $this->error(__('Parameter %s can not be empty', $ids ? 'id' : 'name'));
+            $this->error(__('Parameter %s can not be empty', 'name'));
         }
         if (!preg_match("/^[a-zA-Z0-9]+$/", $name)) {
             $this->error(__('Addon name incorrect'));
@@ -61,7 +64,7 @@ class Addon extends Backend
             $this->error(__('No Results were found'));
         }
         if ($this->request->isPost()) {
-            $params = $this->request->post("row/a");
+            $params = $this->request->post("row/a", [], 'trim');
             if ($params) {
                 foreach ($config as $k => &$v) {
                     if (isset($params[$v['name']])) {
@@ -268,11 +271,15 @@ class Addon extends Backend
     public function upgrade()
     {
         $name = $this->request->post("name");
+        $addonTmpDir = RUNTIME_PATH . 'addons' . DS;
         if (!$name) {
             $this->error(__('Parameter %s can not be empty', 'name'));
         }
         if (!preg_match("/^[a-zA-Z0-9]+$/", $name)) {
             $this->error(__('Addon name incorrect'));
+        }
+        if (!is_dir($addonTmpDir)) {
+            @mkdir($addonTmpDir, 0755, true);
         }
         try {
             $uid = $this->request->post("uid");
