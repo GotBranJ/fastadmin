@@ -128,7 +128,7 @@ class User extends Api
     }
 
     /**
-     * 注销登录
+     * 退出登录
      */
     public function logout()
     {
@@ -158,7 +158,13 @@ class User extends Api
             }
             $user->username = $username;
         }
-        $user->nickname = $nickname;
+        if ($nickname) {
+            $exists = \app\common\model\User::where('nickname', $nickname)->where('id', '<>', $this->auth->id)->find();
+            if ($exists) {
+                $this->error(__('Nickname already exists'));
+            }
+            $user->nickname = $nickname;
+        }
         $user->bio = $bio;
         $user->avatar = $avatar;
         $user->save();

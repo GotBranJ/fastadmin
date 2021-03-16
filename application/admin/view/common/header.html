@@ -3,7 +3,7 @@
     <!-- 迷你模式下Logo的大小为50X50 -->
     <span class="logo-mini">{$site.name|mb_substr=0,4,'utf-8'|mb_strtoupper='utf-8'|htmlentities}</span>
     <!-- 普通模式下Logo -->
-    <span class="logo-lg"><b>{$site.name|mb_substr=0,4,'utf-8'|htmlentities}</b>{$site.name|mb_substr=4,null,'utf-8'|htmlentities}</span>
+    <span class="logo-lg">{$site.name|htmlentities}</span>
 </a>
 
 <!-- 顶部通栏样式 -->
@@ -26,13 +26,6 @@
 
                 <li>
                     <a href="__PUBLIC__" target="_blank"><i class="fa fa-home" style="font-size:14px;"></i></a>
-                </li>
-
-                <!-- 账号信息下拉框 -->
-                <li class="hidden-xs">
-                    <a href="javascript:;" data-toggle="checkupdate" title="{:__('Check for updates')}">
-                        <i class="fa fa-refresh"></i>
-                    </a>
                 </li>
 
                 <!-- 清除缓存 -->
@@ -72,7 +65,7 @@
                 <!-- 账号信息下拉框 -->
                 <li class="dropdown user user-menu">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                        <img src="{$admin.avatar|cdnurl|htmlentities}" class="user-image" alt="{$admin.nickname|htmlentities}">
+                        <img src="{$admin.avatar|cdnurl|htmlentities}" class="user-image" alt="">
                         <span class="hidden-xs">{$admin.nickname|htmlentities}</span>
                     </a>
                     <ul class="dropdown-menu">
@@ -84,20 +77,6 @@
                                 {$admin.nickname|htmlentities}
                                 <small>{$admin.logintime|date="Y-m-d H:i:s",###}</small>
                             </p>
-                        </li>
-                        <!-- Menu Body -->
-                        <li class="user-body">
-                            <div class="row">
-                                <div class="col-xs-4 text-center">
-                                    <a href="https://www.fastadmin.net" target="_blank">{:__('FastAdmin')}</a>
-                                </div>
-                                <div class="col-xs-4 text-center">
-                                    <a href="https://forum.fastadmin.net" target="_blank">{:__('Forum')}</a>
-                                </div>
-                                <div class="col-xs-4 text-center">
-                                    <a href="https://doc.fastadmin.net" target="_blank">{:__('Docs')}</a>
-                                </div>
-                            </div>
                         </li>
                         <!-- Menu Footer-->
                         <li class="user-footer">
@@ -120,7 +99,7 @@
         </div>
     </div>
 
-    {if $config.fastadmin.multiplenav}
+    {if $Think.config.fastadmin.multiplenav}
     <!--第二级菜单,只有在multiplenav开启时才显示-->
     <div id="secondnav">
         <ul class="nav nav-tabs nav-addtabs disable-top-badge" role="tablist">

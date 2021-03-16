@@ -11,7 +11,7 @@ use think\Exception;
 /**
  * 角色组
  *
- * @icon fa fa-group
+ * @icon   fa fa-group
  * @remark 角色组可以有多个,角色有上下级层级关系,如果子角色有角色组和管理员的权限则可以派生属于自己组别下级的角色组或管理员
  */
 class Group extends Backend
@@ -24,6 +24,7 @@ class Group extends Backend
     //当前登录管理员所有子组别
     protected $childrenGroupIds = [];
     //当前组别列表数据
+    protected $grouplist = [];
     protected $groupdata = [];
     //无需要权限判断的方法
     protected $noNeedRight = ['roletree'];
@@ -38,20 +39,28 @@ class Group extends Backend
         $groupList = collection(AuthGroup::where('id', 'in', $this->childrenGroupIds)->select())->toArray();
 
         Tree::instance()->init($groupList);
-        $result = [];
+        $groupList = [];
         if ($this->auth->isSuperAdmin()) {
-            $result = Tree::instance()->getTreeList(Tree::instance()->getTreeArray(0));
+            $groupList = Tree::instance()->getTreeList(Tree::instance()->getTreeArray(0));
         } else {
             $groups = $this->auth->getGroups();
+            $groupIds = [];
             foreach ($groups as $m => $n) {
-                $result = array_merge($result, Tree::instance()->getTreeList(Tree::instance()->getTreeArray($n['pid'])));
+                if (in_array($n['id'], $groupIds) || in_array($n['pid'], $groupIds)) {
+                    continue;
+                }
+                $groupList = array_merge($groupList, Tree::instance()->getTreeList(Tree::instance()->getTreeArray($n['pid'])));
+                foreach ($groupList as $index => $item) {
+                    $groupIds[] = $item['id'];
+                }
             }
         }
         $groupName = [];
-        foreach ($result as $k => $v) {
+        foreach ($groupList as $k => $v) {
             $groupName[$v['id']] = $v['name'];
         }
 
+        $this->grouplist = $groupList;
         $this->groupdata = $groupName;
         $this->assignconfig("admin", ['id' => $this->auth->id, 'group_ids' => $this->auth->getGroupIds()]);
 
@@ -64,19 +73,7 @@ class Group extends Backend
     public function index()
     {
         if ($this->request->isAjax()) {
-            $list = AuthGroup::all(array_keys($this->groupdata));
-            $list = collection($list)->toArray();
-            $groupList = [];
-            foreach ($list as $k => $v) {
-                $groupList[$v['id']] = $v;
-            }
-            $list = [];
-            foreach ($this->groupdata as $k => $v) {
-                if (isset($groupList[$k])) {
-                    $groupList[$k]['name'] = $v;
-                    $list[] = $groupList[$k];
-                }
-            }
+            $list = $this->grouplist;
             $total = count($list);
             $result = array("total" => $total, "rows" => $list);
 
@@ -140,7 +137,7 @@ class Group extends Backend
                 $this->error(__('The parent group exceeds permission limit'));
             }
             // 父节点不能是它自身的子节点或自己本身
-            if (in_array($params['pid'], Tree::instance()->getChildrenIds($row->id,true))){
+            if (in_array($params['pid'], Tree::instance()->getChildrenIds($row->id, true))) {
                 $this->error(__('The parent group can not be its own child or itself'));
             }
             $params['rules'] = explode(',', $params['rules']);
@@ -163,16 +160,16 @@ class Group extends Backend
                 Db::startTrans();
                 try {
                     $row->save($params);
-                    $children_auth_groups = model("AuthGroup")->all(['id'=>['in',implode(',',(Tree::instance()->getChildrenIds($row->id)))]]);
+                    $children_auth_groups = model("AuthGroup")->all(['id' => ['in', implode(',', (Tree::instance()->getChildrenIds($row->id)))]]);
                     $childparams = [];
-                    foreach ($children_auth_groups as $key=>$children_auth_group) {
+                    foreach ($children_auth_groups as $key => $children_auth_group) {
                         $childparams[$key]['id'] = $children_auth_group->id;
                         $childparams[$key]['rules'] = implode(',', array_intersect(explode(',', $children_auth_group->rules), $rules));
                     }
                     model("AuthGroup")->saveAll($childparams);
                     Db::commit();
                     $this->success();
-                }catch (Exception $e){
+                } catch (Exception $e) {
                     Db::rollback();
                     $this->error($e->getMessage());
                 }
@@ -189,6 +186,10 @@ class Group extends Backend
      */
     public function del($ids = "")
     {
+        if (!$this->request->isPost()) {
+            $this->error(__("Invalid parameters"));
+        }
+        $ids = $ids ? $ids : $this->request->post("ids");
         if ($ids) {
             $ids = explode(',', $ids);
             $grouplist = $this->auth->getGroups();

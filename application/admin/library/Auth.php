@@ -68,7 +68,7 @@ class Auth extends \fast\Auth
     }
 
     /**
-     * 注销登录
+     * 退出登录
      */
     public function logout()
     {
@@ -100,7 +100,7 @@ class Auth extends \fast\Auth
                 return false;
             }
             //token有变更
-            if ($key != md5(md5($id) . md5($keeptime) . md5($expiretime) . $admin->token)) {
+            if ($key != md5(md5($id) . md5($keeptime) . md5($expiretime) . $admin->token . config('token.key'))) {
                 return false;
             }
             $ip = request()->ip();
@@ -127,9 +127,9 @@ class Auth extends \fast\Auth
     {
         if ($keeptime) {
             $expiretime = time() + $keeptime;
-            $key = md5(md5($this->id) . md5($keeptime) . md5($expiretime) . $this->token);
+            $key = md5(md5($this->id) . md5($keeptime) . md5($expiretime) . $this->token . config('token.key'));
             $data = [$this->id, $keeptime, $expiretime, $key];
-            Cookie::set('keeplogin', implode('|', $data), 86400 * 30);
+            Cookie::set('keeplogin', implode('|', $data), 86400 * 7);
             return true;
         }
         return false;
@@ -183,7 +183,9 @@ class Auth extends \fast\Auth
         if (Config::get('fastadmin.login_unique')) {
             $my = Admin::get($admin['id']);
             if (!$my || $my['token'] != $admin['token']) {
-                $this->logout();
+                $this->logined = false; //重置登录状态
+                Session::delete("admin");
+                Cookie::delete("keeplogin");
                 return false;
             }
         }
@@ -290,8 +292,8 @@ class Auth extends \fast\Auth
                 break;
             }
             // 取出包含自己的所有子节点
-            $childrenList = Tree::instance()->init($groupList)->getChildren($v['id'], true);
-            $obj = Tree::instance()->init($childrenList)->getTreeArray($v['pid']);
+            $childrenList = Tree::instance()->init($groupList, 'pid')->getChildren($v['id'], true);
+            $obj = Tree::instance()->init($childrenList, 'pid')->getTreeArray($v['pid']);
             $objList = array_merge($objList, Tree::instance()->getTreeList($obj));
         }
         $childrenGroupIds = [];
@@ -481,7 +483,7 @@ class Auth extends \fast\Auth
                 $addtabs = $childList || !$url ? "" : (stripos($url, "?") !== false ? "&" : "?") . "ref=addtabs";
                 $childList = str_replace(
                     '" pid="' . $item['id'] . '"',
-                    ' treeview ' . ($current ? '' : 'hidden') . '" pid="' . $item['id'] . '"',
+                    ' ' . ($current ? '' : 'hidden') . '" pid="' . $item['id'] . '"',
                     $childList
                 );
                 $nav .= '<li class="' . ($current ? 'active' : '') . '"><a href="' . $url . $addtabs . '" addtabs="' . $item['id'] . '" url="' . $url . '"><i class="' . $item['icon'] . '"></i> <span>' . $item['title'] . '</span> <span class="pull-right-container"> </span></a> </li>';

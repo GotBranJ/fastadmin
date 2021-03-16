@@ -123,6 +123,7 @@ class Frontend extends Controller
      */
     protected function loadlang($name)
     {
+        $name =  Loader::parseName($name);
         Lang::load(APP_PATH . $this->request->module() . '/lang/' . $this->request->langset() . '/' . str_replace('.', '/', $name) . '.php');
     }
 
@@ -141,10 +142,10 @@ class Frontend extends Controller
      */
     protected function token()
     {
-        $token = $this->request->post('__token__');
+        $token = $this->request->param('__token__');
 
         //验证Token
-        if (!Validate::is($token, "token", ['__token__' => $token])) {
+        if (!Validate::make()->check(['__token__' => $token], ['__token__' => 'require|token'])) {
             $this->error(__('Token verification error'), '', ['__token__' => $this->request->token()]);
         }
 

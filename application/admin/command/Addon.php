@@ -34,8 +34,8 @@ class Addon extends Command
     {
         $name = $input->getOption('name') ?: '';
         $action = $input->getOption('action') ?: '';
-        if (stripos($name, 'addons/') !== false) {
-            $name = explode('/', $name)[1];
+        if (stripos($name, 'addons' . DS) !== false) {
+            $name = explode(DS, $name)[1];
         }
         //强制覆盖
         $force = $input->getOption('force');
@@ -88,7 +88,7 @@ class Addon extends Command
                     'name'               => $name,
                     'addon'              => $name,
                     'addonClassName'     => ucfirst($name),
-                    'addonInstallMenu'   => $createMenu ? "\$menu = " . var_export_short($createMenu, "\t") . ";\n\tMenu::create(\$menu);" : '',
+                    'addonInstallMenu'   => $createMenu ? "\$menu = " . var_export_short($createMenu) . ";\n\tMenu::create(\$menu);" : '',
                     'addonUninstallMenu' => $menuList ? 'Menu::delete("' . $name . '");' : '',
                     'addonEnableMenu'    => $menuList ? 'Menu::enable("' . $name . '");' : '',
                     'addonDisableMenu'   => $menuList ? 'Menu::disable("' . $name . '");' : '',
@@ -379,5 +379,5 @@ class Addon extends Command
     {
         return __DIR__ . '/Addon/stubs/' . $name . '.stub';
     }
-    
+
 }

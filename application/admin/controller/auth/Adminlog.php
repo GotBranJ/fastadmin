@@ -8,7 +8,7 @@ use app\common\controller\Backend;
 /**
  * 管理员日志
  *
- * @icon fa fa-users
+ * @icon   fa fa-users
  * @remark 管理员可以查看自己所拥有的权限的管理员日志
  */
 class Adminlog extends Backend
@@ -27,10 +27,10 @@ class Adminlog extends Backend
         $this->model = model('AdminLog');
 
         $this->childrenAdminIds = $this->auth->getChildrenAdminIds(true);
-        $this->childrenGroupIds = $this->auth->getChildrenGroupIds($this->auth->isSuperAdmin() ? true : false);
+        $this->childrenGroupIds = $this->auth->getChildrenGroupIds(true);
 
         $groupName = AuthGroup::where('id', 'in', $this->childrenGroupIds)
-                ->column('id,name');
+            ->column('id,name');
 
         $this->view->assign('groupdata', $groupName);
     }
@@ -40,22 +40,17 @@ class Adminlog extends Backend
      */
     public function index()
     {
-        if ($this->request->isAjax())
-        {
+        //设置过滤方法
+        $this->request->filter(['strip_tags', 'trim']);
+        if ($this->request->isAjax()) {
             list($where, $sort, $order, $offset, $limit) = $this->buildparams();
-            $total = $this->model
-                    ->where($where)
-                    ->where('admin_id', 'in', $this->childrenAdminIds)
-                    ->order($sort, $order)
-                    ->count();
-
             $list = $this->model
-                    ->where($where)
-                    ->where('admin_id', 'in', $this->childrenAdminIds)
-                    ->order($sort, $order)
-                    ->limit($offset, $limit)
-                    ->select();
-            $result = array("total" => $total, "rows" => $list);
+                ->where($where)
+                ->where('admin_id', 'in', $this->childrenAdminIds)
+                ->order($sort, $order)
+                ->paginate($limit);
+
+            $result = array("total" => $list->total(), "rows" => $list->items());
 
             return json($result);
         }
@@ -68,8 +63,12 @@ class Adminlog extends Backend
     public function detail($ids)
     {
         $row = $this->model->get(['id' => $ids]);
-        if (!$row)
+        if (!$row) {
             $this->error(__('No Results were found'));
+        }
+        if (!$row['admin_id'] || !in_array($row['admin_id'], $this->childrenAdminIds)) {
+            $this->error(__('You have no permission'));
+        }
         $this->view->assign("row", $row->toArray());
         return $this->view->fetch();
     }
@@ -87,7 +86,7 @@ class Adminlog extends Backend
      * 编辑
      * @internal
      */
-    public function edit($ids = NULL)
+    public function edit($ids = null)
     {
         $this->error();
     }
@@ -97,21 +96,18 @@ class Adminlog extends Backend
      */
     public function del($ids = "")
     {
-        if ($ids)
-        {
-            $childrenGroupIds = $this->childrenGroupIds;
-            $adminList = $this->model->where('id', 'in', $ids)->where('admin_id', 'in', function($query) use($childrenGroupIds) {
-                        $query->name('auth_group_access')->field('uid');
-                    })->select();
-            if ($adminList)
-            {
+        if (!$this->request->isPost()) {
+            $this->error(__("Invalid parameters"));
+        }
+        $ids = $ids ? $ids : $this->request->post("ids");
+        if ($ids) {
+            $adminList = $this->model->where('id', 'in', $ids)->where('admin_id', 'in', $this->childrenAdminIds)->select();
+            if ($adminList) {
                 $deleteIds = [];
-                foreach ($adminList as $k => $v)
-                {
+                foreach ($adminList as $k => $v) {
                     $deleteIds[] = $v->id;
                 }
-                if ($deleteIds)
-                {
+                if ($deleteIds) {
                     $this->model->destroy($deleteIds);
                     $this->success();
                 }
@@ -129,10 +125,9 @@ class Adminlog extends Backend
         // 管理员禁止批量操作
         $this->error();
     }
-    
+
     public function selectpage()
     {
         return parent::selectpage();
     }
-
 }

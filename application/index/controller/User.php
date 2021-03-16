@@ -6,6 +6,7 @@ use addons\wechat\model\WechatCaptcha;
 use app\common\controller\Frontend;
 use app\common\library\Ems;
 use app\common\library\Sms;
+use app\common\model\Attachment;
 use think\Config;
 use think\Cookie;
 use think\Hook;
@@ -30,7 +31,7 @@ class User extends Frontend
             $this->error(__('User center already closed'));
         }
 
-        //监听注册登录注销的事件
+        //监听注册登录退出的事件
         Hook::add('user_login_successed', function ($user) use ($auth) {
             $expire = input('post.keeplogin') ? 30 * 86400 : 0;
             Cookie::set('uid', $user->id, $expire);
@@ -51,20 +52,6 @@ class User extends Frontend
     }
 
     /**
-     * 空的请求
-     * @param $name
-     * @return mixed
-     */
-    public function _empty($name)
-    {
-        $data = Hook::listen("user_request_empty", $name);
-        foreach ($data as $index => $datum) {
-            $this->view->assign($datum);
-        }
-        return $this->view->fetch('user/' . $name);
-    }
-
-    /**
      * 会员中心
      */
     public function index()
@@ -78,7 +65,7 @@ class User extends Frontend
      */
     public function register()
     {
-        $url = $this->request->request('url', '');
+        $url = $this->request->request('url', '', 'trim');
         if ($this->auth->id) {
             $this->success(__('You\'ve logged in, do not login again'), $url ? $url : url('user/index'));
         }
@@ -157,7 +144,7 @@ class User extends Frontend
      */
     public function login()
     {
-        $url = $this->request->request('url', '');
+        $url = $this->request->request('url', '', 'trim');
         if ($this->auth->id) {
             $this->success(__('You\'ve logged in, do not login again'), $url ? $url : url('user/index'));
         }
@@ -207,11 +194,11 @@ class User extends Frontend
     }
 
     /**
-     * 注销登录
+     * 退出登录
      */
     public function logout()
     {
-        //注销本站
+        //退出本站
         $this->auth->logout();
         $this->success(__('Logout successful'), url('user/index'));
     }
@@ -243,6 +230,7 @@ class User extends Frontend
             ];
 
             $msg = [
+                'renewpassword.confirm' => __('Password and confirm password don\'t match')
             ];
             $data = [
                 'oldpassword'   => $oldpassword,
@@ -270,6 +258,70 @@ class User extends Frontend
             }
         }
         $this->view->assign('title', __('Change password'));
+        return $this->view->fetch();
+    }
+
+    public function attachment()
+    {
+        //设置过滤方法
+        $this->request->filter(['strip_tags']);
+        if ($this->request->isAjax()) {
+            $mimetypeQuery = [];
+            $where = [];
+            $filter = $this->request->request('filter');
+            $filterArr = (array)json_decode($filter, true);
+            if (isset($filterArr['mimetype']) && preg_match("/[]\,|\*]/", $filterArr['mimetype'])) {
+                $this->request->get(['filter' => json_encode(array_diff_key($filterArr, ['mimetype' => '']))]);
+                $mimetypeQuery = function ($query) use ($filterArr) {
+                    $mimetypeArr = explode(',', $filterArr['mimetype']);
+                    foreach ($mimetypeArr as $index => $item) {
+                        if (stripos($item, "/*") !== false) {
+                            $query->whereOr('mimetype', 'like', str_replace("/*", "/", $item) . '%');
+                        } else {
+                            $query->whereOr('mimetype', 'like', '%' . $item . '%');
+                        }
+                    }
+                };
+            } elseif (isset($filterArr['mimetype'])) {
+                $where['mimetype'] = ['like', '%' . $filterArr['mimetype'] . '%'];
+            }
+
+            if (isset($filterArr['filename'])) {
+                $where['filename'] = ['like', '%' . $filterArr['filename'] . '%'];
+            }
+
+            if (isset($filterArr['createtime'])) {
+                $timeArr = explode(' - ', $filterArr['createtime']);
+                $where['createtime'] = ['between', [strtotime($timeArr[0]), strtotime($timeArr[1])]];
+            }
+
+            $model = new Attachment();
+            $offset = $this->request->get("offset", 0);
+            $limit = $this->request->get("limit", 0);
+            $total = $model
+                ->where($where)
+                ->where($mimetypeQuery)
+                ->where('user_id', $this->auth->id)
+                ->order("id", "DESC")
+                ->count();
+
+            $list = $model
+                ->where($where)
+                ->where($mimetypeQuery)
+                ->where('user_id', $this->auth->id)
+                ->order("id", "DESC")
+                ->limit($offset, $limit)
+                ->select();
+            $cdnurl = preg_replace("/\/(\w+)\.php$/i", '', $this->request->root());
+            foreach ($list as $k => &$v) {
+                $v['fullurl'] = ($v['storage'] == 'local' ? $cdnurl : $this->view->config['upload']['cdnurl']) . $v['url'];
+            }
+            unset($v);
+            $result = array("total" => $total, "rows" => $list);
+
+            return json($result);
+        }
+        $this->view->assign("mimetypeList", \app\common\model\Attachment::getMimetypeList());
         return $this->view->fetch();
     }
 }

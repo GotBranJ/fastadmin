@@ -125,9 +125,13 @@ class Auth
      */
     public function register($username, $password, $email = '', $mobile = '', $extend = [])
     {
-        // 检测用户名或邮箱、手机号是否存在
+        // 检测用户名、昵称、邮箱、手机号是否存在
         if (User::getByUsername($username)) {
             $this->setError('Username already exist');
+            return false;
+        }
+        if (User::getByNickname($username)) {
+            $this->setError('Nickname already exist');
             return false;
         }
         if ($email && User::getByEmail($email)) {
@@ -152,7 +156,7 @@ class Auth
             'avatar'   => '',
         ];
         $params = array_merge($data, [
-            'nickname'  => $username,
+            'nickname'  => preg_match("/^1[3-9]{1}\d{9}$/",$username) ? substr_replace($username,'****',3,4) : $username,
             'salt'      => Random::alnum(),
             'jointime'  => $time,
             'joinip'    => $ip,
@@ -174,6 +178,9 @@ class Auth
             //设置Token
             $this->_token = Random::uuid();
             Token::set($this->_token, $user->id, $this->keeptime);
+
+            //设置登录状态
+            $this->_logined = true;
 
             //注册成功的事件
             Hook::listen("user_register_successed", $this->_user, $data);
@@ -218,7 +225,7 @@ class Auth
     }
 
     /**
-     * 注销
+     * 退出
      *
      * @return boolean
      */
@@ -232,7 +239,7 @@ class Auth
         $this->_logined = false;
         //删除Token
         Token::delete($this->_token);
-        //注销成功的事件
+        //退出成功的事件
         Hook::listen("user_logout_successed", $this->_user);
         return true;
     }

@@ -19,7 +19,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'template'], function
             // 初始化表格
             table.bootstrapTable({
                 url: $.fn.bootstrapTable.defaults.extend.index_url,
-                sortName: 'weigh',
+                sortName: '',
                 escape: false,
                 columns: [
                     [
@@ -34,6 +34,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'template'], function
                             field: 'ismenu',
                             title: __('Ismenu'),
                             align: 'center',
+                            table: table,
                             formatter: Table.api.formatter.toggle
                         },
                         {
@@ -59,8 +60,15 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'template'], function
             // 为表格绑定事件
             Table.api.bindevent(table);
 
+            //表格内容渲染前
+            table.on('pre-body.bs.table', function (e, data) {
+                var options = table.bootstrapTable("getOptions");
+                options.escape = true;
+            });
             //当内容渲染完成后
-            table.on('post-body.bs.table', function (e, settings, json, xhr) {
+            table.on('post-body.bs.table', function (e, data) {
+                var options = table.bootstrapTable("getOptions");
+                options.escape = false;
                 //默认隐藏所有子节点
                 //$("a.btn[data-id][data-pid][data-pid!=0]").closest("tr").hide();
                 $(".btn-node-sub.disabled").closest("tr").hide();
@@ -76,6 +84,20 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'template'], function
                 });
                 //点击切换/排序/删除操作后刷新左侧菜单
                 $(".btn-change[data-id],.btn-delone,.btn-dragsort").data("success", function (data, ret) {
+                    if ($(this).hasClass("btn-change")) {
+                        var index = $(this).data("index");
+                        var row = Table.api.getrowbyindex(table, index);
+                        row.ismenu = $("i.fa.text-gray", this).length > 0 ? 1 : 0;
+                        table.bootstrapTable("updateRow", {index: index, row: row});
+                    } else if ($(this).hasClass("btn-delone")) {
+                        if ($(this).closest("tr[data-index]").find("a.btn-node-sub.disabled").length > 0) {
+                            $(this).closest("tr[data-index]").remove();
+                        } else {
+                            table.bootstrapTable('refresh');
+                        }
+                    } else if ($(this).hasClass("btn-dragsort")) {
+                        table.bootstrapTable('refresh');
+                    }
                     Fast.api.refreshmenu();
                     return false;
                 });
@@ -114,6 +136,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'template'], function
         api: {
             formatter: {
                 title: function (value, row, index) {
+                    value = value.toString().replace(/(&|&amp;)nbsp;/g, '&nbsp;');
                     return !row.ismenu || row.status == 'hidden' ? "<span class='text-muted'>" + value + "</span>" : value;
                 },
                 name: function (value, row, index) {

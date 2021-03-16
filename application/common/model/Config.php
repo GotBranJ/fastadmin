@@ -19,6 +19,10 @@ class Config extends Model
     protected $updateTime = false;
     // 追加属性
     protected $append = [
+        'extend_html'
+    ];
+    protected $type = [
+        'setting' => 'json',
     ];
 
     /**
@@ -28,24 +32,28 @@ class Config extends Model
     public static function getTypeList()
     {
         $typeList = [
-            'string'   => __('String'),
-            'text'     => __('Text'),
-            'editor'   => __('Editor'),
-            'number'   => __('Number'),
-            'date'     => __('Date'),
-            'time'     => __('Time'),
-            'datetime' => __('Datetime'),
-            'select'   => __('Select'),
-            'selects'  => __('Selects'),
-            'image'    => __('Image'),
-            'images'   => __('Images'),
-            'file'     => __('File'),
-            'files'    => __('Files'),
-            'switch'   => __('Switch'),
-            'checkbox' => __('Checkbox'),
-            'radio'    => __('Radio'),
-            'array'    => __('Array'),
-            'custom'   => __('Custom'),
+            'string'        => __('String'),
+            'text'          => __('Text'),
+            'editor'        => __('Editor'),
+            'number'        => __('Number'),
+            'date'          => __('Date'),
+            'time'          => __('Time'),
+            'datetime'      => __('Datetime'),
+            'datetimerange' => __('Datetimerange'),
+            'select'        => __('Select'),
+            'selects'       => __('Selects'),
+            'image'         => __('Image'),
+            'images'        => __('Images'),
+            'file'          => __('File'),
+            'files'         => __('Files'),
+            'switch'        => __('Switch'),
+            'checkbox'      => __('Checkbox'),
+            'radio'         => __('Radio'),
+            'city'          => __('City'),
+            'selectpage'    => __('Selectpage'),
+            'selectpages'   => __('Selectpages'),
+            'array'         => __('Array'),
+            'custom'        => __('Custom'),
         ];
         return $typeList;
     }
@@ -72,7 +80,7 @@ class Config extends Model
         return $regexList;
     }
 
-    public function getExtendAttr($value, $data)
+    public function getExtendHtmlAttr($value, $data)
     {
         $result = preg_replace_callback("/\{([a-zA-Z]+)\}/", function ($matches) use ($data) {
             if (isset($data[$matches[1]])) {
@@ -161,14 +169,24 @@ class Config extends Model
     {
         $uploadcfg = config('upload');
 
+        $uploadurl = request()->module() ? $uploadcfg['uploadurl'] : ($uploadcfg['uploadurl'] === 'ajax/upload' ? 'index/' . $uploadcfg['uploadurl'] : $uploadcfg['uploadurl']);
+
+        if (!preg_match("/^((?:[a-z]+:)?\/\/)(.*)/i", $uploadurl) && substr($uploadurl, 0, 1) !== '/') {
+            $uploadurl = url($uploadurl, '', false);
+        }
+
         $upload = [
             'cdnurl'    => $uploadcfg['cdnurl'],
-            'uploadurl' => $uploadcfg['uploadurl'],
+            'uploadurl' => $uploadurl,
             'bucket'    => 'local',
             'maxsize'   => $uploadcfg['maxsize'],
             'mimetype'  => $uploadcfg['mimetype'],
+            'chunking'  => $uploadcfg['chunking'],
+            'chunksize' => $uploadcfg['chunksize'],
+            'savekey'   => $uploadcfg['savekey'],
             'multipart' => [],
             'multiple'  => $uploadcfg['multiple'],
+            'storage'   => 'local'
         ];
         return $upload;
     }

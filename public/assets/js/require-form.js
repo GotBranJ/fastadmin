@@ -1,4 +1,4 @@
-define(['jquery', 'bootstrap', 'upload', 'validator'], function ($, undefined, Upload, Validator) {
+define(['jquery', 'bootstrap', 'upload', 'validator', 'validator-lang'], function ($, undefined, Upload, Validator, undefined) {
     var Form = {
         config: {
             fieldlisttpl: '<dd class="form-inline"><input type="text" name="<%=name%>[<%=index%>][key]" class="form-control" value="<%=row.key%>" size="10" /> <input type="text" name="<%=name%>[<%=index%>][value]" class="form-control" value="<%=row.value%>" /> <span class="btn btn-sm btn-danger btn-remove"><i class="fa fa-times"></i></span> <span class="btn btn-sm btn-primary btn-dragsort"><i class="fa fa-arrows"></i></span></dd>'
@@ -83,6 +83,12 @@ define(['jquery', 'bootstrap', 'upload', 'validator'], function ($, undefined, U
 
                 //移除提交按钮的disabled类
                 $(".layer-footer [type=submit],.fixed-footer [type=submit],.normal-footer [type=submit]", form).removeClass("disabled");
+                //自定义关闭按钮事件
+                form.on("click", ".layer-close", function () {
+                    var index = parent.Layer.getFrameIndex(window.name);
+                    parent.Layer.close(index);
+                    return false;
+                });
             },
             selectpicker: function (form) {
                 //绑定select元素事件
@@ -215,22 +221,35 @@ define(['jquery', 'bootstrap', 'upload', 'validator'], function ($, undefined, U
                     });
                 }
             },
+            /**
+             * 绑定上传事件
+             * @param form
+             * @deprecated Use faupload instead.
+             */
             plupload: function (form) {
-                //绑定plupload上传元素事件
-                if ($(".plupload", form).size() > 0) {
-                    Upload.api.plupload($(".plupload", form));
+                Form.events.faupload(form);
+            },
+            /**
+             * 绑定上传事件
+             * @param form
+             */
+            faupload: function (form) {
+                //绑定上传元素事件
+                if ($(".plupload,.faupload", form).size() > 0) {
+                    Upload.api.upload($(".plupload,.faupload", form));
                 }
             },
             faselect: function (form) {
                 //绑定fachoose选择附件事件
-                if ($(".fachoose", form).size() > 0) {
-                    $(".fachoose", form).on('click', function () {
+                if ($(".faselect,.fachoose", form).size() > 0) {
+                    $(".faselect,.fachoose", form).on('click', function () {
                         var that = this;
                         var multiple = $(this).data("multiple") ? $(this).data("multiple") : false;
                         var mimetype = $(this).data("mimetype") ? $(this).data("mimetype") : '';
                         var admin_id = $(this).data("admin-id") ? $(this).data("admin-id") : '';
                         var user_id = $(this).data("user-id") ? $(this).data("user-id") : '';
-                        parent.Fast.api.open("general/attachment/select?element_id=" + $(this).attr("id") + "&multiple=" + multiple + "&mimetype=" + mimetype + "&admin_id=" + admin_id + "&user_id=" + user_id, __('Choose'), {
+                        var url = $(this).data("url") ? $(this).data("url") : (typeof Backend !== 'undefined' ? "general/attachment/select" : "user/attachment");
+                        parent.Fast.api.open(url + "?element_id=" + $(this).attr("id") + "&multiple=" + multiple + "&mimetype=" + mimetype + "&admin_id=" + admin_id + "&user_id=" + user_id, __('Choose'), {
                             callback: function (data) {
                                 var button = $("#" + $(that).attr("id"));
                                 var maxcount = $(button).data("maxcount");
@@ -316,7 +335,7 @@ define(['jquery', 'bootstrap', 'upload', 'validator'], function ($, undefined, U
                             row = row ? row : {};
                             var vars = {index: index, name: name, data: data, row: row};
                             var html = template ? Template(template, vars) : Template.render(Form.config.fieldlisttpl, vars);
-                            $(html).insertBefore($(tagName + ":last", container));
+                            $(html).attr("fieldlist-item", true).insertBefore($(tagName + ":last", container));
                             $(this).trigger("fa.event.appendfieldlist", $(this).closest(tagName).prev());
                         });
                         //移除控制
@@ -343,17 +362,20 @@ define(['jquery', 'bootstrap', 'upload', 'validator'], function ($, undefined, U
                                 return true;
                             }
                             var template = $(this).data("template");
-                            var json = {};
-                            try {
-                                json = JSON.parse(textarea.val());
-                            } catch (e) {
-                            }
-                            $.each(json, function (i, j) {
-                                $(".btn-append,.append", container).trigger('click', template ? j : {
-                                    key: i,
-                                    value: j
+                            textarea.on("fa.event.refreshfieldlist", function () {
+                                $("[fieldlist-item]", container).remove();
+                                var json = {};
+                                try {
+                                    json = JSON.parse($(this).val());
+                                } catch (e) {
+                                }
+                                $.each(json, function (i, j) {
+                                    $(".btn-append,.append", container).trigger('click', template ? j : {
+                                        key: i, value: j
+                                    });
                                 });
                             });
+                            textarea.trigger("fa.event.refreshfieldlist");
                         });
                     });
                 }
@@ -363,20 +385,31 @@ define(['jquery', 'bootstrap', 'upload', 'validator'], function ($, undefined, U
                     if ($(this).hasClass("disabled")) {
                         return false;
                     }
-                    var input = $(this).prev("input");
-                    input = $(this).data("input-id") ? $("#" + $(this).data("input-id")) : input;
-                    if (input.size() > 0) {
-                        var yes = $(this).data("yes");
-                        var no = $(this).data("no");
-                        if (input.val() == yes) {
-                            input.val(no);
-                            $("i", this).addClass("fa-flip-horizontal text-gray");
-                        } else {
-                            input.val(yes);
-                            $("i", this).removeClass("fa-flip-horizontal text-gray");
+                    var switcher = $.proxy(function () {
+                        var input = $(this).prev("input");
+                        input = $(this).data("input-id") ? $("#" + $(this).data("input-id")) : input;
+                        if (input.size() > 0) {
+                            var yes = $(this).data("yes");
+                            var no = $(this).data("no");
+                            if (input.val() == yes) {
+                                input.val(no);
+                                $("i", this).addClass("fa-flip-horizontal text-gray");
+                            } else {
+                                input.val(yes);
+                                $("i", this).removeClass("fa-flip-horizontal text-gray");
+                            }
+                            input.trigger('change');
                         }
-                        input.trigger('change');
+                    }, this);
+                    if (typeof $(this).data("confirm") !== 'undefined') {
+                        Layer.confirm($(this).data("confirm"), function (index) {
+                            switcher();
+                            Layer.close(index);
+                        });
+                    } else {
+                        switcher();
                     }
+
                     return false;
                 });
             },
@@ -489,7 +522,7 @@ define(['jquery', 'bootstrap', 'upload', 'validator'], function ($, undefined, U
 
                 events.datetimepicker(form);
 
-                events.plupload(form);
+                events.faupload(form);
 
                 events.faselect(form);
 

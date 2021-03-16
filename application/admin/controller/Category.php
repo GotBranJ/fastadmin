@@ -10,7 +10,7 @@ use fast\Tree;
  * 分类管理
  *
  * @icon   fa fa-list
- * @remark 用于统一管理网站的所有分类,分类可进行无限级分类,分类类型请在常规管理->系统配置->字典配置中添加
+ * @remark 用于管理网站的所有分类,分类可进行无限级分类,分类类型请在常规管理->系统配置->字典配置中添加
  */
 class Category extends Backend
 {
@@ -82,6 +82,17 @@ class Category extends Backend
     }
 
     /**
+     * 添加
+     */
+    public function add()
+    {
+        if ($this->request->isPost()) {
+            $this->token();
+        }
+        return parent::add();
+    }
+
+    /**
      * 编辑
      */
     public function edit($ids = null)
@@ -97,6 +108,7 @@ class Category extends Backend
             }
         }
         if ($this->request->isPost()) {
+            $this->token();
             $params = $this->request->post("row/a");
             if ($params) {
                 $params = $this->preExcludeFields($params);

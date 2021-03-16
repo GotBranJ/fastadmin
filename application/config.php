@@ -51,6 +51,8 @@ return [
     'class_suffix'           => false,
     // 控制器类后缀
     'controller_suffix'      => false,
+    // 获取IP的变量
+    'http_agent_ip'          => 'REMOTE_ADDR',
     // +----------------------------------------------------------------------
     // | 模块设置
     // +----------------------------------------------------------------------
@@ -270,13 +272,27 @@ return [
         //是否开启IP变动检测
         'loginip_check'         => true,
         //登录页默认背景图
-        'login_background'      => "/assets/img/loginbg.jpg",
+        'login_background'      => "",
         //是否启用多级菜单导航
         'multiplenav'           => false,
-        //自动检测更新
-        'checkupdate'           => false,
+        //是否开启多选项卡(仅在开启多级菜单时起作用)
+        'multipletab'           => true,
+        //后台皮肤,为空时表示使用skin-black-green
+        'adminskin'             => '',
+        //后台是否启用面包屑
+        'breadcrumb'            => false,
+        //是否允许未知来源的插件压缩包
+        'unknownsources'        => false,
+        //插件启用禁用时是否备份对应的全局文件
+        'backup_global_files'   => true,
+        //是否开启后台自动日志记录
+        'auto_record_log'       => true,
+        //插件纯净模式，插件启用后是否删除插件目录的application、public和assets文件夹
+        'addon_pure_mode'       => true,
+        //允许跨域的域名,多个以,分隔
+        'cors_request_domain'   => 'localhost,127.0.0.1',
         //版本号
-        'version'               => '1.0.0.20191212_beta',
+        'version'               => '1.2.0.20210125_beta',
         //API接口地址
         'api_url'               => 'https://api.fastadmin.net',
     ],

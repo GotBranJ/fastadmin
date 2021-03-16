@@ -3,7 +3,7 @@
 namespace fast;
 
 /**
- * 字符串类
+ * Http 请求类
  */
 class Http
 {
@@ -60,7 +60,7 @@ class Http
             } else {
                 $defaults[CURLOPT_CUSTOMREQUEST] = $method;
             }
-            $defaults[CURLOPT_POSTFIELDS] = $query_string;
+            $defaults[CURLOPT_POSTFIELDS] = $params;
         }
 
         $defaults[CURLOPT_HEADER] = false;

@@ -52,99 +52,19 @@ define(['jquery', 'bootstrap', 'backend', 'addtabs', 'adminlte', 'form'], functi
                 Backend.api.addtabs($(this).data("url"));
             });
 
-            //读取首次登录推荐插件列表
-            if (localStorage.getItem("fastep") == "installed") {
-                $.ajax({
-                    url: Config.fastadmin.api_url + '/addon/recommend',
-                    type: 'post',
-                    dataType: 'jsonp',
-                    success: function (ret) {
-                        require(['template'], function (Template) {
-                            var install = function (name, title) {
-                                Fast.api.ajax({
-                                    url: 'addon/install',
-                                    data: {name: name, faversion: Config.fastadmin.version}
-                                }, function (data, ret) {
-                                    Fast.api.refreshmenu();
-                                });
-                            };
-                            $(document).on('click', '.btn-install', function () {
-                                $(this).prop("disabled", true).addClass("disabled");
-                                $("input[name=addon]:checked").each(function () {
-                                    install($(this).data("name"));
-                                });
-                                return false;
-                            });
-                            $(document).on('click', '.btn-notnow', function () {
-                                Layer.closeAll();
-                            });
-                            Layer.open({
-                                type: 1, skin: 'layui-layer-page', area: ["860px", "620px"], title: '',
-                                content: Template.render(ret.tpl, {addonlist: ret.rows})
-                            });
-                            localStorage.setItem("fastep", "dashboard");
-                        });
-                    }
-                });
-            }
-
-            //版本检测
-            var checkupdate = function (ignoreversion, tips) {
-                $.ajax({
-                    url: Config.fastadmin.api_url + '/version/check',
-                    type: 'post',
-                    data: {version: Config.fastadmin.version},
-                    dataType: 'jsonp',
-                    success: function (ret) {
-                        if (ret.data && ignoreversion !== ret.data.newversion) {
-                            Layer.open({
-                                title: __('Discover new version'),
-                                maxHeight: 400,
-                                content: '<h5 style="background-color:#f7f7f7; font-size:14px; padding: 10px;">' + __('Your current version') + ':' + ret.data.version + '，' + __('New version') + ':' + ret.data.newversion + '</h5><span class="label label-danger">' + __('Release notes') + '</span><br/>' + ret.data.upgradetext,
-                                btn: [__('Go to download'), __('Ignore this version'), __('Do not remind again')],
-                                btn2: function (index, layero) {
-                                    localStorage.setItem("ignoreversion", ret.data.newversion);
-                                },
-                                btn3: function (index, layero) {
-                                    localStorage.setItem("ignoreversion", "*");
-                                },
-                                success: function (layero, index) {
-                                    $(".layui-layer-btn0", layero).attr("href", ret.data.downloadurl).attr("target", "_blank");
-                                }
-                            });
-                        } else {
-                            if (tips) {
-                                Toastr.success(__('Currently is the latest version'));
-                            }
-                        }
-                    }, error: function (e) {
-                        if (tips) {
-                            Toastr.error(__('Unknown data format') + ":" + e.message);
-                        }
-                    }
-                });
-            };
-
-            //读取版本检测信息
-            var ignoreversion = localStorage.getItem("ignoreversion");
-            if (Config.fastadmin.checkupdate && ignoreversion !== "*") {
-                checkupdate(ignoreversion, false);
-            }
-            //手动检测版本信息
-            $("a[data-toggle='checkupdate']").on('click', function () {
-                checkupdate('', true);
-            });
-
             //切换左侧sidebar显示隐藏
             $(document).on("click fa.event.toggleitem", ".sidebar-menu li > a", function (e) {
-                $(".sidebar-menu li").removeClass("active");
+                var nextul = $(this).next("ul");
+                if (nextul.length == 0 && (!$(this).parent("li").hasClass("treeview") || ($("body").hasClass("multiplenav") && $(this).parent().parent().hasClass("sidebar-menu")))) {
+                    $(".sidebar-menu li").removeClass("active");
+                }
                 //当外部触发隐藏的a时,触发父辈a的事件
                 if (!$(this).closest("ul").is(":visible")) {
                     //如果不需要左侧的菜单栏联动可以注释下面一行即可
                     $(this).closest("ul").prev().trigger("click");
                 }
 
-                var visible = $(this).next("ul").is(":visible");
+                var visible = nextul.is(":visible");
                 if (!visible) {
                     $(this).parents("li").addClass("active");
                 } else {
@@ -188,7 +108,7 @@ define(['jquery', 'bootstrap', 'backend', 'addtabs', 'adminlte', 'form'], functi
                 }
             });
 
-            var multiplenav = Config.fastadmin.multiplenav;
+            var multiplenav = $("#secondnav").size() > 0 ? true : false;
             var firstnav = $("#firstnav .nav-addtabs");
             var nav = multiplenav ? $("#secondnav .nav-addtabs") : firstnav;
 
@@ -196,7 +116,8 @@ define(['jquery', 'bootstrap', 'backend', 'addtabs', 'adminlte', 'form'], functi
             $(document).on('refresh', '.sidebar-menu', function () {
                 Fast.api.ajax({
                     url: 'index/index',
-                    data: {action: 'refreshmenu'}
+                    data: {action: 'refreshmenu'},
+                    loading: false
                 }, function (data) {
                     $(".sidebar-menu li:not([data-rel='external'])").remove();
                     $(".sidebar-menu").prepend(data.menulist);
@@ -211,6 +132,7 @@ define(['jquery', 'bootstrap', 'backend', 'addtabs', 'adminlte', 'form'], functi
             });
 
             if (multiplenav) {
+                firstnav.css("overflow", "inherit");
                 //一级菜单自适应
                 $(window).resize(function () {
                     var siblingsWidth = 0;
@@ -225,7 +147,7 @@ define(['jquery', 'bootstrap', 'backend', 'addtabs', 'adminlte', 'form'], functi
                 firstnav.on("click", "li a", function () {
                     $("li", firstnav).removeClass("active");
                     $(this).closest("li").addClass("active");
-                    $(".sidebar-menu > li.treeview").addClass("hidden");
+                    $(".sidebar-menu > li[pid]").addClass("hidden");
                     if ($(this).attr("url") == "javascript:;") {
                         var sonlist = $(".sidebar-menu > li[pid='" + $(this).attr("addtabs") + "']");
                         sonlist.removeClass("hidden");
@@ -244,6 +166,22 @@ define(['jquery', 'bootstrap', 'backend', 'addtabs', 'adminlte', 'form'], functi
                     }
                 });
 
+                var mobilenav = $(".mobilenav");
+                $("#firstnav .nav-addtabs li a").each(function () {
+                    mobilenav.append($(this).clone().addClass("btn btn-app"));
+                });
+
+                //点击移动端一级菜单
+                mobilenav.on("click", "a", function () {
+                    $("a", mobilenav).removeClass("active");
+                    $(this).addClass("active");
+                    $(".sidebar-menu > li[pid]").addClass("hidden");
+                    if ($(this).attr("url") == "javascript:;") {
+                        var sonlist = $(".sidebar-menu > li[pid='" + $(this).attr("addtabs") + "']");
+                        sonlist.removeClass("hidden");
+                    }
+                });
+
                 //点击左侧菜单栏
                 $(document).on('click', '.sidebar-menu li a[addtabs]', function (e) {
                     var parents = $(this).parentsUntil("ul.sidebar-menu", "li");
@@ -258,22 +196,8 @@ define(['jquery', 'bootstrap', 'backend', 'addtabs', 'adminlte', 'form'], functi
                                 obj.trigger("click");
                             }
                         }
-                    }
-                });
-
-                var mobilenav = $(".mobilenav");
-                $("#firstnav .nav-addtabs li a").each(function () {
-                    mobilenav.append($(this).clone().addClass("btn btn-app"));
-                });
-
-                //点击移动端一级菜单
-                mobilenav.on("click", "a", function () {
-                    $("a", mobilenav).removeClass("active");
-                    $(this).addClass("active");
-                    $(".sidebar-menu > li.treeview").addClass("hidden");
-                    if ($(this).attr("url") == "javascript:;") {
-                        var sonlist = $(".sidebar-menu > li[pid='" + $(this).attr("addtabs") + "']");
-                        sonlist.removeClass("hidden");
+                        mobilenav.find("a").removeClass("active");
+                        mobilenav.find("a[addtabs='" + pid + "']").addClass("active");
                     }
                 });
             }
@@ -287,7 +211,7 @@ define(['jquery', 'bootstrap', 'backend', 'addtabs', 'adminlte', 'form'], functi
             if ($("ul.sidebar-menu li.active a").size() > 0) {
                 $("ul.sidebar-menu li.active a").trigger("click");
             } else {
-                if (Config.fastadmin.multiplenav) {
+                if (multiplenav) {
                     $("li:first > a", firstnav).trigger("click");
                 } else {
                     $("ul.sidebar-menu li a[url!='javascript:;']:first").trigger("click");
@@ -314,17 +238,23 @@ define(['jquery', 'bootstrap', 'backend', 'addtabs', 'adminlte', 'form'], functi
 
             var my_skins = [
                 "skin-blue",
-                "skin-white",
+                "skin-black",
                 "skin-red",
                 "skin-yellow",
                 "skin-purple",
                 "skin-green",
                 "skin-blue-light",
-                "skin-white-light",
+                "skin-black-light",
                 "skin-red-light",
                 "skin-yellow-light",
                 "skin-purple-light",
-                "skin-green-light"
+                "skin-green-light",
+                "skin-black-blue",
+                "skin-black-purple",
+                "skin-black-red",
+                "skin-black-green",
+                "skin-black-yellow",
+                "skin-black-pink",
             ];
             setup();
 

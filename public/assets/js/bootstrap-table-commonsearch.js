@@ -64,8 +64,9 @@
                 var query = Fast.api.query(vObjCol.field);
                 var operate = Fast.api.query(vObjCol.field + "-operate");
 
-                vObjCol.defaultValue = that.options.renderDefault && query ? query : (typeof vObjCol.defaultValue === 'undefined' ? '' : vObjCol.defaultValue);
-                vObjCol.operate = that.options.renderDefault && operate ? operate : (typeof vObjCol.operate === 'undefined' ? '=' : vObjCol.operate);
+                var renderDefault = that.options.renderDefault && (typeof vObjCol.renderDefault == 'undefined' || vObjCol.renderDefault);
+                vObjCol.defaultValue = renderDefault && query ? query : (typeof vObjCol.defaultValue === 'undefined' ? '' : vObjCol.defaultValue);
+                vObjCol.operate = renderDefault && operate ? operate : (typeof vObjCol.operate === 'undefined' ? '=' : vObjCol.operate);
                 ColumnsForSearch.push(vObjCol);
 
                 htmlForm.push('<div class="form-group col-xs-12 col-sm-6 col-md-4 col-lg-3">');
@@ -79,6 +80,7 @@
                 var extend = typeof vObjCol.extend === 'undefined' ? '' : vObjCol.extend;
                 var style = typeof vObjCol.style === 'undefined' ? '' : sprintf('style="%s"', vObjCol.style);
                 extend = typeof vObjCol.data !== 'undefined' && extend == '' ? vObjCol.data : extend;
+                extend = typeof vObjCol.autocomplete !== 'undefined' ? extend + ' autocomplete="' + (vObjCol.autocomplete === false || vObjCol.autocomplete === 'off' ? 'off' : 'on') + '"' : extend;
                 if (vObjCol.searchList) {
                     if (typeof vObjCol.searchList === 'function') {
                         htmlForm.push(vObjCol.searchList.call(this, vObjCol));
@@ -94,7 +96,7 @@
                                         searchList = ret;
                                     }
                                     var optionList = createOptionList(searchList, vObjCol, that);
-                                    $("form.form-commonsearch select[name='" + vObjCol.field + "']", that.$container).html(optionList.join(''));
+                                    $("form.form-commonsearch select[name='" + vObjCol.field + "']", that.$container).html(optionList.join('')).trigger("change");
                                 });
                             })(vObjCol, that);
                         } else {
@@ -110,8 +112,8 @@
                         var defaultValueArr = defaultValue.toString().match(/\|/) ? defaultValue.split('|') : ['', ''];
                         var placeholderArr = placeholder.toString().match(/\|/) ? placeholder.split('|') : [placeholder, placeholder];
                         htmlForm.push('<div class="row row-between">');
-                        htmlForm.push(sprintf('<div class="col-xs-6"><input type="%s" class="%s" name="%s" value="%s" placeholder="%s" id="%s" data-index="%s" %s %s></div>', type, addClass, vObjCol.field, defaultValueArr[0], placeholderArr[0], vObjCol.field, i, style, extend));
-                        htmlForm.push(sprintf('<div class="col-xs-6"><input type="%s" class="%s" name="%s" value="%s" placeholder="%s" id="%s" data-index="%s" %s %s></div>', type, addClass, vObjCol.field, defaultValueArr[1], placeholderArr[1], vObjCol.field, i, style, extend));
+                        htmlForm.push(sprintf('<div class="col-xs-6"><input type="%s" class="%s" name="%s" value="%s" placeholder="%s" id="%s-min" data-index="%s" %s %s></div>', type, addClass, vObjCol.field, defaultValueArr[0], placeholderArr[0], vObjCol.field, i, style, extend));
+                        htmlForm.push(sprintf('<div class="col-xs-6"><input type="%s" class="%s" name="%s" value="%s" placeholder="%s" id="%s-max" data-index="%s" %s %s></div>', type, addClass, vObjCol.field, defaultValueArr[1], placeholderArr[1], vObjCol.field, i, style, extend));
                         htmlForm.push('</div>');
                     } else {
                         htmlForm.push(sprintf('<input type="%s" class="%s" name="%s" value="%s" placeholder="%s" id="%s" data-index="%s" %s %s>', type, addClass, vObjCol.field, defaultValue, placeholder, vObjCol.field, i, style, extend));
@@ -290,10 +292,12 @@
         _initHeader.apply(this, Array.prototype.slice.apply(arguments));
         this.$header.find('th[data-field]').each(function (i) {
             var column = $(this).data();
-            if (typeof column['width'] !== 'undefined') {
-                $(this).css("min-width", column['width']);
+            if (typeof column['width'] !== 'undefined' && column['width'].toString().indexOf("%") === -1) {
+                $(".th-inner", this).outerWidth(column['width']);
+                $(this).css("max-width", column['width']);
             }
         });
+        this.options.stateField = this.header.stateField;
     };
     BootstrapTable.prototype.initToolbar = function () {
         _initToolbar.apply(this, Array.prototype.slice.apply(arguments));
@@ -333,7 +337,7 @@
                 } else if (obj.size() > 1) {
                     $("form [name='" + $(this).data("field") + "'][value='" + value + "']", that.$commonsearch).prop("checked", true);
                 } else {
-                    obj.val(value);
+                    obj.val(value + "");
                 }
                 obj.trigger("change");
                 $("form", that.$commonsearch).trigger("submit");
@@ -382,8 +386,8 @@
                     [value, item, i], value);
 
                 if (!($.inArray(key, that.header.fields) !== -1 &&
-                        (typeof value === 'string' || typeof value === 'number') &&
-                        (value + '').toLowerCase().indexOf(fval) !== -1)) {
+                    (typeof value === 'string' || typeof value === 'number') &&
+                    (value + '').toLowerCase().indexOf(fval) !== -1)) {
                     return false;
                 }
             }

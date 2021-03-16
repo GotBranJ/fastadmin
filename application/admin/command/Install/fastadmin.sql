@@ -1,10 +1,6 @@
 /*
  FastAdmin Install SQL
-
- 官网: https://www.fastadmin.net
- 演示: https://demo.fastadmin.net
-
- Date: 2018年05月26日
+ Date: 2020-06-11 22:11:09
 */
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -15,28 +11,28 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS `fa_admin`;
 CREATE TABLE `fa_admin` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `username` varchar(20) NOT NULL DEFAULT '' COMMENT '用户名',
-  `nickname` varchar(50) NOT NULL DEFAULT '' COMMENT '昵称',
-  `password` varchar(32) NOT NULL DEFAULT '' COMMENT '密码',
-  `salt` varchar(30) NOT NULL DEFAULT '' COMMENT '密码盐',
-  `avatar` varchar(255) NOT NULL DEFAULT '' COMMENT '头像',
-  `email` varchar(100) NOT NULL DEFAULT '' COMMENT '电子邮箱',
+  `username` varchar(20) DEFAULT '' COMMENT '用户名',
+  `nickname` varchar(50) DEFAULT '' COMMENT '昵称',
+  `password` varchar(32) DEFAULT '' COMMENT '密码',
+  `salt` varchar(30) DEFAULT '' COMMENT '密码盐',
+  `avatar` varchar(255) DEFAULT '' COMMENT '头像',
+  `email` varchar(100) DEFAULT '' COMMENT '电子邮箱',
   `loginfailure` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT '失败次数',
   `logintime` int(10) DEFAULT NULL COMMENT '登录时间',
   `loginip` varchar(50) DEFAULT NULL COMMENT '登录IP',
   `createtime` int(10) DEFAULT NULL COMMENT '创建时间',
   `updatetime` int(10) DEFAULT NULL COMMENT '更新时间',
-  `token` varchar(59) NOT NULL DEFAULT '' COMMENT 'Session标识',
+  `token` varchar(59) DEFAULT '' COMMENT 'Session标识',
   `status` varchar(30) NOT NULL DEFAULT 'normal' COMMENT '状态',
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='管理员表';
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='管理员表';
 
 -- ----------------------------
 -- Records of fa_admin
 -- ----------------------------
 BEGIN;
-INSERT INTO `fa_admin` VALUES (1, 'admin', 'Admin', '075eaec83636846f51c152f29b98a2fd', 's4f3', '/assets/img/avatar.png', 'admin@fastadmin.net', 0, 1502029281, '127.0.0.1',1492186163, 1502029281, 'd3992c3b-5ecc-4ecb-9dc2-8997780fcadc', 'normal');
+INSERT INTO `fa_admin` VALUES (1, 'admin', 'Admin', '075eaec83636846f51c152f29b98a2fd', 's4f3', '/assets/img/avatar.png', 'admin@admin.com', 0, 1502029281, '127.0.0.1',1492186163, 1502029281, 'd3992c3b-5ecc-4ecb-9dc2-8997780fcadc', 'normal');
 COMMIT;
 
 -- ----------------------------
@@ -46,16 +42,37 @@ DROP TABLE IF EXISTS `fa_admin_log`;
 CREATE TABLE `fa_admin_log` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
   `admin_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '管理员ID',
-  `username` varchar(30) NOT NULL DEFAULT '' COMMENT '管理员名字',
-  `url` varchar(1500) NOT NULL DEFAULT '' COMMENT '操作页面',
-  `title` varchar(100) NOT NULL DEFAULT '' COMMENT '日志标题',
+  `username` varchar(30) DEFAULT '' COMMENT '管理员名字',
+  `url` varchar(1500) DEFAULT '' COMMENT '操作页面',
+  `title` varchar(100) DEFAULT '' COMMENT '日志标题',
   `content` text NOT NULL COMMENT '内容',
-  `ip` varchar(50) NOT NULL DEFAULT '' COMMENT 'IP',
-  `useragent` varchar(255) NOT NULL DEFAULT '' COMMENT 'User-Agent',
+  `ip` varchar(50) DEFAULT '' COMMENT 'IP',
+  `useragent` varchar(255) DEFAULT '' COMMENT 'User-Agent',
   `createtime` int(10) DEFAULT NULL COMMENT '操作时间',
   PRIMARY KEY (`id`),
   KEY `name` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='管理员日志表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='管理员日志表';
+
+-- ----------------------------
+-- Table structure for fa_area
+-- ----------------------------
+DROP TABLE IF EXISTS `fa_area`;
+CREATE TABLE `fa_area` (
+  `id` int(10) NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `pid` int(10) DEFAULT NULL COMMENT '父id',
+  `shortname` varchar(100) DEFAULT NULL COMMENT '简称',
+  `name` varchar(100) DEFAULT NULL COMMENT '名称',
+  `mergename` varchar(255) DEFAULT NULL COMMENT '全称',
+  `level` tinyint(4) DEFAULT NULL COMMENT '层级 0 1 2 省市区县',
+  `pinyin` varchar(100) DEFAULT NULL COMMENT '拼音',
+  `code` varchar(100) DEFAULT NULL COMMENT '长途区号',
+  `zip` varchar(100) DEFAULT NULL COMMENT '邮编',
+  `first` varchar(50) DEFAULT NULL COMMENT '首字母',
+  `lng` varchar(100) DEFAULT NULL COMMENT '经度',
+  `lat` varchar(100) DEFAULT NULL COMMENT '纬度',
+  PRIMARY KEY (`id`),
+  KEY `pid` (`pid`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='地区表';
 
 -- ----------------------------
 -- Table structure for fa_attachment
@@ -65,27 +82,28 @@ CREATE TABLE `fa_attachment` (
   `id` int(20) unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
   `admin_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '管理员ID',
   `user_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '会员ID',
-  `url` varchar(255) NOT NULL DEFAULT '' COMMENT '物理路径',
-  `imagewidth` varchar(30) NOT NULL DEFAULT '' COMMENT '宽度',
-  `imageheight` varchar(30) NOT NULL DEFAULT '' COMMENT '高度',
-  `imagetype` varchar(30) NOT NULL DEFAULT '' COMMENT '图片类型',
+  `url` varchar(255) DEFAULT '' COMMENT '物理路径',
+  `imagewidth` varchar(30) DEFAULT '' COMMENT '宽度',
+  `imageheight` varchar(30) DEFAULT '' COMMENT '高度',
+  `imagetype` varchar(30) DEFAULT '' COMMENT '图片类型',
   `imageframes` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '图片帧数',
+  `filename` varchar(100) DEFAULT '' COMMENT '文件名称',
   `filesize` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '文件大小',
-  `mimetype` varchar(100) NOT NULL DEFAULT '' COMMENT 'mime类型',
-  `extparam` varchar(255) NOT NULL DEFAULT '' COMMENT '透传数据',
+  `mimetype` varchar(100) DEFAULT '' COMMENT 'mime类型',
+  `extparam` varchar(255) DEFAULT '' COMMENT '透传数据',
   `createtime` int(10) DEFAULT NULL COMMENT '创建日期',
   `updatetime` int(10) DEFAULT NULL COMMENT '更新时间',
   `uploadtime` int(10) DEFAULT NULL COMMENT '上传时间',
   `storage` varchar(100) NOT NULL DEFAULT 'local' COMMENT '存储位置',
-  `sha1` varchar(40) NOT NULL DEFAULT '' COMMENT '文件 sha1编码',
+  `sha1` varchar(40) DEFAULT '' COMMENT '文件 sha1编码',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='附件表';
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='附件表';
 
 -- ----------------------------
 -- Records of fa_attachment
 -- ----------------------------
 BEGIN;
-INSERT INTO `fa_attachment` VALUES (1, 1, 0, '/assets/img/qrcode.png', '150', '150', 'png', 0, 21859, 'image/png', '', 1499681848, 1499681848, 1499681848, 'local', '17163603d0263e4838b9387ff2cd4877e8b018f6');
+INSERT INTO `fa_attachment` VALUES (1, 1, 0, '/assets/img/qrcode.png', '150', '150', 'png', 0, 'qrcode.png', 21859, 'image/png', '', 1499681848, 1499681848, 1499681848, 'local', '17163603d0263e4838b9387ff2cd4877e8b018f6');
 COMMIT;
 
 -- ----------------------------
@@ -95,13 +113,13 @@ DROP TABLE IF EXISTS `fa_auth_group`;
 CREATE TABLE `fa_auth_group` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `pid` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '父组别',
-  `name` varchar(100) NOT NULL DEFAULT '' COMMENT '组名',
+  `name` varchar(100) DEFAULT '' COMMENT '组名',
   `rules` text NOT NULL COMMENT '规则ID',
   `createtime` int(10) DEFAULT NULL COMMENT '创建时间',
   `updatetime` int(10) DEFAULT NULL COMMENT '更新时间',
-  `status` varchar(30) NOT NULL DEFAULT '' COMMENT '状态',
+  `status` varchar(30) DEFAULT '' COMMENT '状态',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='分组表';
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='分组表';
 
 -- ----------------------------
 -- Records of fa_auth_group
@@ -124,7 +142,7 @@ CREATE TABLE `fa_auth_group_access` (
   UNIQUE KEY `uid_group_id` (`uid`,`group_id`),
   KEY `uid` (`uid`),
   KEY `group_id` (`group_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='权限分组表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='权限分组表';
 
 -- ----------------------------
 -- Records of fa_auth_group_access
@@ -141,21 +159,21 @@ CREATE TABLE `fa_auth_rule` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `type` enum('menu','file') NOT NULL DEFAULT 'file' COMMENT 'menu为菜单,file为权限节点',
   `pid` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '父ID',
-  `name` varchar(100) NOT NULL DEFAULT '' COMMENT '规则名称',
-  `title` varchar(50) NOT NULL DEFAULT '' COMMENT '规则名称',
-  `icon` varchar(50) NOT NULL DEFAULT '' COMMENT '图标',
-  `condition` varchar(255) NOT NULL DEFAULT '' COMMENT '条件',
-  `remark` varchar(255) NOT NULL DEFAULT '' COMMENT '备注',
+  `name` varchar(100) DEFAULT '' COMMENT '规则名称',
+  `title` varchar(50) DEFAULT '' COMMENT '规则名称',
+  `icon` varchar(50) DEFAULT '' COMMENT '图标',
+  `condition` varchar(255) DEFAULT '' COMMENT '条件',
+  `remark` varchar(255) DEFAULT '' COMMENT '备注',
   `ismenu` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT '是否为菜单',
   `createtime` int(10) DEFAULT NULL COMMENT '创建时间',
   `updatetime` int(10) DEFAULT NULL COMMENT '更新时间',
   `weigh` int(10) NOT NULL DEFAULT '0' COMMENT '权重',
-  `status` varchar(30) NOT NULL DEFAULT '' COMMENT '状态',
+  `status` varchar(30) DEFAULT '' COMMENT '状态',
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`) USING BTREE,
   KEY `pid` (`pid`),
   KEY `weigh` (`weigh`)
-) ENGINE=InnoDB AUTO_INCREMENT=66 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='节点表';
+) ENGINE=InnoDB AUTO_INCREMENT=66 DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='节点表';
 
 -- ----------------------------
 -- Records of fa_auth_rule
@@ -252,22 +270,22 @@ DROP TABLE IF EXISTS `fa_category`;
 CREATE TABLE `fa_category` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `pid` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '父ID',
-  `type` varchar(30) NOT NULL DEFAULT '' COMMENT '栏目类型',
-  `name` varchar(30) NOT NULL DEFAULT '',
-  `nickname` varchar(50) NOT NULL DEFAULT '',
-  `flag` set('hot','index','recommend') NOT NULL DEFAULT '',
-  `image` varchar(100) NOT NULL DEFAULT '' COMMENT '图片',
-  `keywords` varchar(255) NOT NULL DEFAULT '' COMMENT '关键字',
-  `description` varchar(255) NOT NULL DEFAULT '' COMMENT '描述',
-  `diyname` varchar(30) NOT NULL DEFAULT '' COMMENT '自定义名称',
+  `type` varchar(30) DEFAULT '' COMMENT '栏目类型',
+  `name` varchar(30) DEFAULT '',
+  `nickname` varchar(50) DEFAULT '',
+  `flag` set('hot','index','recommend') DEFAULT '',
+  `image` varchar(100) DEFAULT '' COMMENT '图片',
+  `keywords` varchar(255) DEFAULT '' COMMENT '关键字',
+  `description` varchar(255) DEFAULT '' COMMENT '描述',
+  `diyname` varchar(30) DEFAULT '' COMMENT '自定义名称',
   `createtime` int(10) DEFAULT NULL COMMENT '创建时间',
   `updatetime` int(10) DEFAULT NULL COMMENT '更新时间',
   `weigh` int(10) NOT NULL DEFAULT '0' COMMENT '权重',
-  `status` varchar(30) NOT NULL DEFAULT '' COMMENT '状态',
+  `status` varchar(30) DEFAULT '' COMMENT '状态',
   PRIMARY KEY (`id`),
   KEY `weigh` (`weigh`,`id`),
   KEY `pid` (`pid`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='分类表';
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='分类表';
 
 -- ----------------------------
 -- Records of fa_category
@@ -294,40 +312,41 @@ COMMIT;
 DROP TABLE IF EXISTS `fa_config`;
 CREATE TABLE `fa_config` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(30) NOT NULL DEFAULT '' COMMENT '变量名',
-  `group` varchar(30) NOT NULL DEFAULT '' COMMENT '分组',
-  `title` varchar(100) NOT NULL DEFAULT '' COMMENT '变量标题',
-  `tip` varchar(100) NOT NULL DEFAULT '' COMMENT '变量描述',
-  `type` varchar(30) NOT NULL DEFAULT '' COMMENT '类型:string,text,int,bool,array,datetime,date,file',
-  `value` text NOT NULL COMMENT '变量值',
-  `content` text NOT NULL COMMENT '变量字典数据',
-  `rule` varchar(100) NOT NULL DEFAULT '' COMMENT '验证规则',
-  `extend` varchar(255) NOT NULL DEFAULT '' COMMENT '扩展属性',
+  `name` varchar(30) DEFAULT '' COMMENT '变量名',
+  `group` varchar(30) DEFAULT '' COMMENT '分组',
+  `title` varchar(100) DEFAULT '' COMMENT '变量标题',
+  `tip` varchar(100) DEFAULT '' COMMENT '变量描述',
+  `type` varchar(30) DEFAULT '' COMMENT '类型:string,text,int,bool,array,datetime,date,file',
+  `value` text COMMENT '变量值',
+  `content` text COMMENT '变量字典数据',
+  `rule` varchar(100) DEFAULT '' COMMENT '验证规则',
+  `extend` varchar(255) DEFAULT '' COMMENT '扩展属性',
+  `setting` varchar(255) DEFAULT '' COMMENT '配置',
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='系统配置';
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='系统配置';
 
 -- ----------------------------
 -- Records of fa_config
 -- ----------------------------
 BEGIN;
-INSERT INTO `fa_config` VALUES (1, 'name', 'basic', 'Site name', '请填写站点名称', 'string', 'FastAdmin', '', 'required', '');
-INSERT INTO `fa_config` VALUES (2, 'beian', 'basic', 'Beian', '粤ICP备15000000号-1', 'string', '', '', '', '');
-INSERT INTO `fa_config` VALUES (3, 'cdnurl', 'basic', 'Cdn url', '如果静态资源使用第三方云储存请配置该值', 'string', '', '', '', '');
-INSERT INTO `fa_config` VALUES (4, 'version', 'basic', 'Version', '如果静态资源有变动请重新配置该值', 'string', '1.0.1', '', 'required', '');
-INSERT INTO `fa_config` VALUES (5, 'timezone', 'basic', 'Timezone', '', 'string', 'Asia/Shanghai', '', 'required', '');
-INSERT INTO `fa_config` VALUES (6, 'forbiddenip', 'basic', 'Forbidden ip', '一行一条记录', 'text', '', '', '', '');
-INSERT INTO `fa_config` VALUES (7, 'languages', 'basic', 'Languages', '', 'array', '{\"backend\":\"zh-cn\",\"frontend\":\"zh-cn\"}', '', 'required', '');
-INSERT INTO `fa_config` VALUES (8, 'fixedpage', 'basic', 'Fixed page', '请尽量输入左侧菜单栏存在的链接', 'string', 'dashboard', '', 'required', '');
-INSERT INTO `fa_config` VALUES (9, 'categorytype', 'dictionary', 'Category type', '', 'array', '{\"default\":\"Default\",\"page\":\"Page\",\"article\":\"Article\",\"test\":\"Test\"}', '', '', '');
-INSERT INTO `fa_config` VALUES (10, 'configgroup', 'dictionary', 'Config group', '', 'array', '{\"basic\":\"Basic\",\"email\":\"Email\",\"dictionary\":\"Dictionary\",\"user\":\"User\",\"example\":\"Example\"}', '', '', '');
-INSERT INTO `fa_config` VALUES (11, 'mail_type', 'email', 'Mail type', '选择邮件发送方式', 'select', '1', '[\"Please select\",\"SMTP\",\"Mail\"]', '', '');
-INSERT INTO `fa_config` VALUES (12, 'mail_smtp_host', 'email', 'Mail smtp host', '错误的配置发送邮件会导致服务器超时', 'string', 'smtp.qq.com', '', '', '');
-INSERT INTO `fa_config` VALUES (13, 'mail_smtp_port', 'email', 'Mail smtp port', '(不加密默认25,SSL默认465,TLS默认587)', 'string', '465', '', '', '');
-INSERT INTO `fa_config` VALUES (14, 'mail_smtp_user', 'email', 'Mail smtp user', '（填写完整用户名）', 'string', '10000', '', '', '');
-INSERT INTO `fa_config` VALUES (15, 'mail_smtp_pass', 'email', 'Mail smtp password', '（填写您的密码）', 'string', 'password', '', '', '');
-INSERT INTO `fa_config` VALUES (16, 'mail_verify_type', 'email', 'Mail vertify type', '（SMTP验证方式[推荐SSL]）', 'select', '2', '[\"None\",\"TLS\",\"SSL\"]', '', '');
-INSERT INTO `fa_config` VALUES (17, 'mail_from', 'email', 'Mail from', '', 'string', '10000@qq.com', '', '', '');
+INSERT INTO `fa_config` VALUES (1, 'name', 'basic', 'Site name', '请填写站点名称', 'string', '我的网站', '', 'required', '', '');
+INSERT INTO `fa_config` VALUES (2, 'beian', 'basic', 'Beian', '粤ICP备15000000号-1', 'string', '', '', '', '', '');
+INSERT INTO `fa_config` VALUES (3, 'cdnurl', 'basic', 'Cdn url', '如果全站静态资源使用第三方云储存请配置该值', 'string', '', '', '', '', '');
+INSERT INTO `fa_config` VALUES (4, 'version', 'basic', 'Version', '如果静态资源有变动请重新配置该值', 'string', '1.0.1', '', 'required', '', '');
+INSERT INTO `fa_config` VALUES (5, 'timezone', 'basic', 'Timezone', '', 'string', 'Asia/Shanghai', '', 'required', '', '');
+INSERT INTO `fa_config` VALUES (6, 'forbiddenip', 'basic', 'Forbidden ip', '一行一条记录', 'text', '', '', '', '', '');
+INSERT INTO `fa_config` VALUES (7, 'languages', 'basic', 'Languages', '', 'array', '{\"backend\":\"zh-cn\",\"frontend\":\"zh-cn\"}', '', 'required', '', '');
+INSERT INTO `fa_config` VALUES (8, 'fixedpage', 'basic', 'Fixed page', '请尽量输入左侧菜单栏存在的链接', 'string', 'dashboard', '', 'required', '', '');
+INSERT INTO `fa_config` VALUES (9, 'categorytype', 'dictionary', 'Category type', '', 'array', '{\"default\":\"Default\",\"page\":\"Page\",\"article\":\"Article\",\"test\":\"Test\"}', '', '', '', '');
+INSERT INTO `fa_config` VALUES (10, 'configgroup', 'dictionary', 'Config group', '', 'array', '{\"basic\":\"Basic\",\"email\":\"Email\",\"dictionary\":\"Dictionary\",\"user\":\"User\",\"example\":\"Example\"}', '', '', '', '');
+INSERT INTO `fa_config` VALUES (11, 'mail_type', 'email', 'Mail type', '选择邮件发送方式', 'select', '1', '[\"请选择\",\"SMTP\"]', '', '', '');
+INSERT INTO `fa_config` VALUES (12, 'mail_smtp_host', 'email', 'Mail smtp host', '错误的配置发送邮件会导致服务器超时', 'string', 'smtp.qq.com', '', '', '', '');
+INSERT INTO `fa_config` VALUES (13, 'mail_smtp_port', 'email', 'Mail smtp port', '(不加密默认25,SSL默认465,TLS默认587)', 'string', '465', '', '', '', '');
+INSERT INTO `fa_config` VALUES (14, 'mail_smtp_user', 'email', 'Mail smtp user', '（填写完整用户名）', 'string', '10000', '', '', '', '');
+INSERT INTO `fa_config` VALUES (15, 'mail_smtp_pass', 'email', 'Mail smtp password', '（填写您的密码或授权码）', 'string', 'password', '', '', '', '');
+INSERT INTO `fa_config` VALUES (16, 'mail_verify_type', 'email', 'Mail vertify type', '（SMTP验证方式[推荐SSL]）', 'select', '2', '[\"无\",\"TLS\",\"SSL\"]', '', '', '');
+INSERT INTO `fa_config` VALUES (17, 'mail_from', 'email', 'Mail from', '', 'string', '10000@qq.com', '', '', '', '');
 COMMIT;
 
 -- ----------------------------
@@ -336,14 +355,14 @@ COMMIT;
 DROP TABLE IF EXISTS `fa_ems`;
 CREATE TABLE `fa_ems`  (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `event` varchar(30) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '事件',
-  `email` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '邮箱',
-  `code` varchar(10) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '验证码',
+  `event` varchar(30) DEFAULT '' COMMENT '事件',
+  `email` varchar(100) DEFAULT '' COMMENT '邮箱',
+  `code` varchar(10) DEFAULT '' COMMENT '验证码',
   `times` int(10) UNSIGNED NOT NULL DEFAULT 0 COMMENT '验证次数',
-  `ip` varchar(30) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT 'IP',
-  `createtime` int(10) UNSIGNED NULL DEFAULT 0 COMMENT '创建时间',
+  `ip` varchar(30) DEFAULT '' COMMENT 'IP',
+  `createtime` int(10) DEFAULT NULL COMMENT '创建时间',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='邮箱验证码表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='邮箱验证码表';
 
 -- ----------------------------
 -- Table structure for fa_sms
@@ -351,14 +370,14 @@ CREATE TABLE `fa_ems`  (
 DROP TABLE IF EXISTS `fa_sms`;
 CREATE TABLE `fa_sms` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `event` varchar(30) NOT NULL DEFAULT '' COMMENT '事件',
-  `mobile` varchar(20) NOT NULL DEFAULT '' COMMENT '手机号',
-  `code` varchar(10) NOT NULL DEFAULT '' COMMENT '验证码',
+  `event` varchar(30) DEFAULT '' COMMENT '事件',
+  `mobile` varchar(20) DEFAULT '' COMMENT '手机号',
+  `code` varchar(10) DEFAULT '' COMMENT '验证码',
   `times` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '验证次数',
-  `ip` varchar(30) NOT NULL DEFAULT '' COMMENT 'IP',
+  `ip` varchar(30) DEFAULT '' COMMENT 'IP',
   `createtime` int(10) unsigned DEFAULT '0' COMMENT '创建时间',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='短信验证码表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='短信验证码表';
 
 -- ----------------------------
 -- Table structure for fa_test
@@ -370,17 +389,17 @@ CREATE TABLE `fa_test` (
   `category_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '分类ID(单选)',
   `category_ids` varchar(100) NOT NULL COMMENT '分类ID(多选)',
   `week` enum('monday','tuesday','wednesday') NOT NULL COMMENT '星期(单选):monday=星期一,tuesday=星期二,wednesday=星期三',
-  `flag` set('hot','index','recommend') NOT NULL DEFAULT '' COMMENT '标志(多选):hot=热门,index=首页,recommend=推荐',
+  `flag` set('hot','index','recommend') DEFAULT '' COMMENT '标志(多选):hot=热门,index=首页,recommend=推荐',
   `genderdata` enum('male','female') NOT NULL DEFAULT 'male' COMMENT '性别(单选):male=男,female=女',
   `hobbydata` set('music','reading','swimming') NOT NULL COMMENT '爱好(多选):music=音乐,reading=读书,swimming=游泳',
-  `title` varchar(50) NOT NULL DEFAULT '' COMMENT '标题',
+  `title` varchar(50) DEFAULT '' COMMENT '标题',
   `content` text NOT NULL COMMENT '内容',
-  `image` varchar(100) NOT NULL DEFAULT '' COMMENT '图片',
-  `images` varchar(1500) NOT NULL DEFAULT '' COMMENT '图片组',
-  `attachfile` varchar(100) NOT NULL DEFAULT '' COMMENT '附件',
-  `keywords` varchar(100) NOT NULL DEFAULT '' COMMENT '关键字',
-  `description` varchar(255) NOT NULL DEFAULT '' COMMENT '描述',
-  `city` varchar(100) NOT NULL DEFAULT '' COMMENT '省市',
+  `image` varchar(100) DEFAULT '' COMMENT '图片',
+  `images` varchar(1500) DEFAULT '' COMMENT '图片组',
+  `attachfile` varchar(100) DEFAULT '' COMMENT '附件',
+  `keywords` varchar(100) DEFAULT '' COMMENT '关键字',
+  `description` varchar(255) DEFAULT '' COMMENT '描述',
+  `city` varchar(100) DEFAULT '' COMMENT '省市',
   `json` varchar(255) DEFAULT NULL COMMENT '配置:key=名称,value=值',
   `price` float(10,2) unsigned NOT NULL DEFAULT '0.00' COMMENT '价格',
   `views` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '点击',
@@ -397,7 +416,7 @@ CREATE TABLE `fa_test` (
   `status` enum('normal','hidden') NOT NULL DEFAULT 'normal' COMMENT '状态',
   `state` enum('0','1','2') NOT NULL DEFAULT '1' COMMENT '状态值:0=禁用,1=正常,2=推荐',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='测试表';
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='测试表';
 
 -- ----------------------------
 -- Records of fa_test
@@ -413,37 +432,37 @@ DROP TABLE IF EXISTS `fa_user`;
 CREATE TABLE `fa_user` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
   `group_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '组别ID',
-  `username` varchar(32) NOT NULL DEFAULT '' COMMENT '用户名',
-  `nickname` varchar(50) NOT NULL DEFAULT '' COMMENT '昵称',
-  `password` varchar(32) NOT NULL DEFAULT '' COMMENT '密码',
-  `salt` varchar(30) NOT NULL DEFAULT '' COMMENT '密码盐',
-  `email` varchar(100) NOT NULL DEFAULT '' COMMENT '电子邮箱',
-  `mobile` varchar(11) NOT NULL DEFAULT '' COMMENT '手机号',
-  `avatar` varchar(255) NOT NULL DEFAULT '' COMMENT '头像',
+  `username` varchar(32) DEFAULT '' COMMENT '用户名',
+  `nickname` varchar(50) DEFAULT '' COMMENT '昵称',
+  `password` varchar(32) DEFAULT '' COMMENT '密码',
+  `salt` varchar(30) DEFAULT '' COMMENT '密码盐',
+  `email` varchar(100) DEFAULT '' COMMENT '电子邮箱',
+  `mobile` varchar(11) DEFAULT '' COMMENT '手机号',
+  `avatar` varchar(255) DEFAULT '' COMMENT '头像',
   `level` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT '等级',
   `gender` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT '性别',
-  `birthday` date COMMENT '生日',
-  `bio` varchar(100) NOT NULL DEFAULT '' COMMENT '格言',
-  `money` decimal(10,2) unsigned NOT NULL DEFAULT '0.00' COMMENT '余额',
-  `score` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '积分',
+  `birthday` date DEFAULT NULL COMMENT '生日',
+  `bio` varchar(100) DEFAULT '' COMMENT '格言',
+  `money` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '余额',
+  `score` int(10) NOT NULL DEFAULT '0' COMMENT '积分',
   `successions` int(10) unsigned NOT NULL DEFAULT '1' COMMENT '连续登录天数',
   `maxsuccessions` int(10) unsigned NOT NULL DEFAULT '1' COMMENT '最大连续登录天数',
   `prevtime` int(10) DEFAULT NULL COMMENT '上次登录时间',
   `logintime` int(10) DEFAULT NULL COMMENT '登录时间',
-  `loginip` varchar(50) NOT NULL DEFAULT '' COMMENT '登录IP',
+  `loginip` varchar(50) DEFAULT '' COMMENT '登录IP',
   `loginfailure` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT '失败次数',
-  `joinip` varchar(50) NOT NULL DEFAULT '' COMMENT '加入IP',
+  `joinip` varchar(50) DEFAULT '' COMMENT '加入IP',
   `jointime` int(10) DEFAULT NULL COMMENT '加入时间',
   `createtime` int(10) DEFAULT NULL COMMENT '创建时间',
   `updatetime` int(10) DEFAULT NULL COMMENT '更新时间',
-  `token` varchar(50) NOT NULL DEFAULT '' COMMENT 'Token',
-  `status` varchar(30) NOT NULL DEFAULT '' COMMENT '状态',
-  `verification` varchar(255) NOT NULL DEFAULT '' COMMENT '验证',
+  `token` varchar(50) DEFAULT '' COMMENT 'Token',
+  `status` varchar(30) DEFAULT '' COMMENT '状态',
+  `verification` varchar(255) DEFAULT '' COMMENT '验证',
   PRIMARY KEY (`id`),
   KEY `username` (`username`),
   KEY `email` (`email`),
   KEY `mobile` (`mobile`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='会员表';
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='会员表';
 
 -- ----------------------------
 -- Records of fa_user
@@ -464,7 +483,7 @@ CREATE TABLE `fa_user_group` (
   `updatetime` int(10) DEFAULT NULL COMMENT '更新时间',
   `status` enum('normal','hidden') DEFAULT NULL COMMENT '状态',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='会员组表';
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='会员组表';
 
 -- ----------------------------
 -- Records of fa_user_group
@@ -483,10 +502,10 @@ CREATE TABLE `fa_user_money_log` (
   `money` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '变更余额',
   `before` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '变更前余额',
   `after` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '变更后余额',
-  `memo` varchar(255) NOT NULL DEFAULT '' COMMENT '备注',
+  `memo` varchar(255) DEFAULT '' COMMENT '备注',
   `createtime` int(10) DEFAULT NULL COMMENT '创建时间',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='会员余额变动表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='会员余额变动表';
 
 -- ----------------------------
 -- Table structure for fa_user_rule
@@ -504,24 +523,24 @@ CREATE TABLE `fa_user_rule` (
   `weigh` int(10) DEFAULT '0' COMMENT '权重',
   `status` enum('normal','hidden') DEFAULT NULL COMMENT '状态',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='会员规则表';
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='会员规则表';
 
 -- ----------------------------
 -- Records of fa_user_rule
 -- ----------------------------
 BEGIN;
-INSERT INTO `fa_user_rule` VALUES (1, 0, 'index', '前台', '', 1, 1516168079, 1516168079, 1, 'normal');
-INSERT INTO `fa_user_rule` VALUES (2, 0, 'api', 'API接口', '', 1, 1516168062, 1516168062, 2, 'normal');
-INSERT INTO `fa_user_rule` VALUES (3, 1, 'user', '会员模块', '', 1, 1515386221, 1516168103, 12, 'normal');
-INSERT INTO `fa_user_rule` VALUES (4, 2, 'user', '会员模块', '', 1, 1515386221, 1516168092, 11, 'normal');
-INSERT INTO `fa_user_rule` VALUES (5, 3, 'index/user/login', '登录', '', 0, 1515386247, 1515386247, 5, 'normal');
-INSERT INTO `fa_user_rule` VALUES (6, 3, 'index/user/register', '注册', '', 0, 1515386262, 1516015236, 7, 'normal');
-INSERT INTO `fa_user_rule` VALUES (7, 3, 'index/user/index', '会员中心', '', 0, 1516015012, 1516015012, 9, 'normal');
-INSERT INTO `fa_user_rule` VALUES (8, 3, 'index/user/profile', '个人资料', '', 0, 1516015012, 1516015012, 4, 'normal');
-INSERT INTO `fa_user_rule` VALUES (9, 4, 'api/user/login', '登录', '', 0, 1515386247, 1515386247, 6, 'normal');
-INSERT INTO `fa_user_rule` VALUES (10, 4, 'api/user/register', '注册', '', 0, 1515386262, 1516015236, 8, 'normal');
-INSERT INTO `fa_user_rule` VALUES (11, 4, 'api/user/index', '会员中心', '', 0, 1516015012, 1516015012, 10, 'normal');
-INSERT INTO `fa_user_rule` VALUES (12, 4, 'api/user/profile', '个人资料', '', 0, 1516015012, 1516015012, 3, 'normal');
+INSERT INTO `fa_user_rule` VALUES (1, 0, 'index', 'Frontend', '', 1, 1516168079, 1516168079, 1, 'normal');
+INSERT INTO `fa_user_rule` VALUES (2, 0, 'api', 'API Interface', '', 1, 1516168062, 1516168062, 2, 'normal');
+INSERT INTO `fa_user_rule` VALUES (3, 1, 'user', 'User Module', '', 1, 1515386221, 1516168103, 12, 'normal');
+INSERT INTO `fa_user_rule` VALUES (4, 2, 'user', 'User Module', '', 1, 1515386221, 1516168092, 11, 'normal');
+INSERT INTO `fa_user_rule` VALUES (5, 3, 'index/user/login', 'Login', '', 0, 1515386247, 1515386247, 5, 'normal');
+INSERT INTO `fa_user_rule` VALUES (6, 3, 'index/user/register', 'Register', '', 0, 1515386262, 1516015236, 7, 'normal');
+INSERT INTO `fa_user_rule` VALUES (7, 3, 'index/user/index', 'User Center', '', 0, 1516015012, 1516015012, 9, 'normal');
+INSERT INTO `fa_user_rule` VALUES (8, 3, 'index/user/profile', 'Profile', '', 0, 1516015012, 1516015012, 4, 'normal');
+INSERT INTO `fa_user_rule` VALUES (9, 4, 'api/user/login', 'Login', '', 0, 1515386247, 1515386247, 6, 'normal');
+INSERT INTO `fa_user_rule` VALUES (10, 4, 'api/user/register', 'Register', '', 0, 1515386262, 1516015236, 8, 'normal');
+INSERT INTO `fa_user_rule` VALUES (11, 4, 'api/user/index', 'User Center', '', 0, 1516015012, 1516015012, 10, 'normal');
+INSERT INTO `fa_user_rule` VALUES (12, 4, 'api/user/profile', 'Profile', '', 0, 1516015012, 1516015012, 3, 'normal');
 COMMIT;
 
 -- ----------------------------
@@ -534,10 +553,10 @@ CREATE TABLE `fa_user_score_log` (
   `score` int(10) NOT NULL DEFAULT '0' COMMENT '变更积分',
   `before` int(10) NOT NULL DEFAULT '0' COMMENT '变更前积分',
   `after` int(10) NOT NULL DEFAULT '0' COMMENT '变更后积分',
-  `memo` varchar(255) NOT NULL DEFAULT '' COMMENT '备注',
+  `memo` varchar(255) DEFAULT '' COMMENT '备注',
   `createtime` int(10) DEFAULT NULL COMMENT '创建时间',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='会员积分变动表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='会员积分变动表';
 
 -- ----------------------------
 -- Table structure for fa_user_token
@@ -549,7 +568,7 @@ CREATE TABLE `fa_user_token` (
   `createtime` int(10) DEFAULT NULL COMMENT '创建时间',
   `expiretime` int(10) DEFAULT NULL COMMENT '过期时间',
   PRIMARY KEY (`token`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='会员Token表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='会员Token表';
 
 -- ----------------------------
 -- Table structure for fa_version
@@ -557,24 +576,17 @@ CREATE TABLE `fa_user_token` (
 DROP TABLE IF EXISTS `fa_version`;
 CREATE TABLE `fa_version`  (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `oldversion` varchar(30) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '旧版本号',
-  `newversion` varchar(30) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '新版本号',
-  `packagesize` varchar(30) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '包大小',
-  `content` varchar(500) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '升级内容',
-  `downloadurl` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '下载地址',
+  `oldversion` varchar(30) DEFAULT '' COMMENT '旧版本号',
+  `newversion` varchar(30) DEFAULT '' COMMENT '新版本号',
+  `packagesize` varchar(30) DEFAULT '' COMMENT '包大小',
+  `content` varchar(500) DEFAULT '' COMMENT '升级内容',
+  `downloadurl` varchar(255) DEFAULT '' COMMENT '下载地址',
   `enforce` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '强制更新',
-  `createtime` int(10) NOT NULL DEFAULT 0 COMMENT '创建时间',
-  `updatetime` int(10) UNSIGNED NOT NULL DEFAULT 0 COMMENT '更新时间',
+  `createtime` int(10) DEFAULT NULL COMMENT '创建时间',
+  `updatetime` int(10) DEFAULT NULL COMMENT '更新时间',
   `weigh` int(10) NOT NULL DEFAULT 0 COMMENT '权重',
-  `status` varchar(30) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '状态',
+  `status` varchar(30) DEFAULT '' COMMENT '状态',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT = '版本表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='版本表';
 
--- ----------------------------
--- Table structure for fa_version
--- ----------------------------
-BEGIN;
-INSERT INTO `fa_version` (`id`, `oldversion`, `newversion`, `packagesize`, `content`, `downloadurl`, `enforce`, `createtime`, `updatetime`, `weigh`, `status`) VALUES
-(1, '1.1.1,2', '1.2.1', '20M', '更新内容', 'https://www.fastadmin.net/download.html', 1, 1520425318, 0, 0, 'normal');
-COMMIT;
 SET FOREIGN_KEY_CHECKS = 1;

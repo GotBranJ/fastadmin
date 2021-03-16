@@ -2,6 +2,8 @@
 
 // 公共助手函数
 
+use Symfony\Component\VarExporter\VarExporter;
+
 if (!function_exists('__')) {
 
     /**
@@ -83,7 +85,8 @@ if (!function_exists('cdnurl')) {
     function cdnurl($url, $domain = false)
     {
         $regex = "/^((?:[a-z]+:)?\/\/|data:image\/)(.*)/i";
-        $url = preg_match($regex, $url) ? $url : \think\Config::get('upload.cdnurl') . $url;
+        $cdnurl = \think\Config::get('upload.cdnurl');
+        $url = preg_match($regex, $url) || ($cdnurl && stripos($url, $cdnurl) === 0) ? $url : $cdnurl . $url;
         if ($domain && !preg_match($regex, $url)) {
             $domain = is_bool($domain) ? request()->domain() : $domain;
             $url = $domain . $url;
@@ -97,7 +100,7 @@ if (!function_exists('is_really_writable')) {
 
     /**
      * 判断文件或文件夹是否可写
-     * @param    string $file 文件或目录
+     * @param string $file 文件或目录
      * @return    bool
      */
     function is_really_writable($file)
@@ -244,7 +247,7 @@ if (!function_exists('addtion')) {
                 $model = $v['name'] ? \think\Db::name($v['name']) : \think\Db::table($v['table']);
             }
             $primary = $v['primary'] ? $v['primary'] : $model->getPk();
-            $result[$v['field']] = $model->where($primary, 'in', $ids[$v['field']])->column("{$primary},{$v['column']}");
+            $result[$v['field']] = isset($ids[$v['field']]) ? $model->where($primary, 'in', $ids[$v['field']])->column("{$primary},{$v['column']}") : [];
         }
 
         foreach ($items as $k => &$v) {
@@ -263,29 +266,67 @@ if (!function_exists('addtion')) {
 if (!function_exists('var_export_short')) {
 
     /**
-     * 返回打印数组结构
-     * @param string $var    数组
-     * @param string $indent 缩进字符
+     * 使用短标签打印或返回数组结构
+     * @param mixed   $data
+     * @param boolean $return 是否返回数据
      * @return string
      */
-    function var_export_short($var, $indent = "")
+    function var_export_short($data, $return = true)
     {
-        switch (gettype($var)) {
-            case "string":
-                return '"' . addcslashes($var, "\\\$\"\r\n\t\v\f") . '"';
-            case "array":
-                $indexed = array_keys($var) === range(0, count($var) - 1);
-                $r = [];
-                foreach ($var as $key => $value) {
-                    $r[] = "$indent    "
-                        . ($indexed ? "" : var_export_short($key) . " => ")
-                        . var_export_short($value, "$indent    ");
+        return var_export($data, $return);
+        $replaced = [];
+        $count = 0;
+
+        //判断是否是对象
+        if (is_resource($data) || is_object($data)) {
+            return var_export($data, $return);
+        }
+
+        //判断是否有特殊的键名
+        $specialKey = false;
+        array_walk_recursive($data, function (&$value, &$key) use (&$specialKey) {
+            if (is_string($key) && (stripos($key, "\n") !== false || stripos($key, "array (") !== false)) {
+                $specialKey = true;
+            }
+        });
+        if ($specialKey) {
+            return var_export($data, $return);
+        }
+        array_walk_recursive($data, function (&$value, &$key) use (&$replaced, &$count, &$stringcheck) {
+            if (is_object($value) || is_resource($value)) {
+                $replaced[$count] = var_export($value, true);
+                $value = "##<{$count}>##";
+            } else {
+                if (is_string($value) && (stripos($value, "\n") !== false || stripos($value, "array (") !== false)) {
+                    $index = array_search($value, $replaced);
+                    if ($index === false) {
+                        $replaced[$count] = var_export($value, true);
+                        $value = "##<{$count}>##";
+                    } else {
+                        $value = "##<{$index}>##";
+                    }
                 }
-                return "[\n" . implode(",\n", $r) . "\n" . $indent . "]";
-            case "boolean":
-                return $var ? "TRUE" : "FALSE";
-            default:
-                return var_export($var, true);
+            }
+            $count++;
+        });
+
+        $dump = var_export($data, true);
+
+        $dump = preg_replace('#(?:\A|\n)([ ]*)array \(#i', '[', $dump); // Starts
+        $dump = preg_replace('#\n([ ]*)\),#', "\n$1],", $dump); // Ends
+        $dump = preg_replace('#=> \[\n\s+\],\n#', "=> [],\n", $dump); // Empties
+        $dump = preg_replace('#\)$#', "]", $dump); //End
+
+        if ($replaced) {
+            $dump = preg_replace_callback("/'##<(\d+)>##'/", function ($matches) use ($replaced) {
+                return isset($replaced[$matches[1]]) ? $replaced[$matches[1]] : "''";
+            }, $dump);
+        }
+
+        if ($return === true) {
+            return $dump;
+        } else {
+            echo $dump;
         }
     }
 }
@@ -305,7 +346,7 @@ if (!function_exists('letter_avatar')) {
         $bg = "rgb({$r},{$g},{$b})";
         $color = "#ffffff";
         $first = mb_strtoupper(mb_substr($text, 0, 1));
-        $src = base64_encode('<svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="100" width="100"><rect fill="' . $bg . '" x="0" y="0" width="100" height="100"></rect><text x="50" y="50" font-size="50" text-copy="fast" fill="' . $color . '" text-anchor="middle" text-rights="admin" alignment-baseline="central">' . $first . '</text></svg>');
+        $src = base64_encode('<svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="100" width="100"><rect fill="' . $bg . '" x="0" y="0" width="100" height="100"></rect><text x="50" y="50" font-size="50" text-copy="fast" fill="' . $color . '" text-anchor="middle" text-rights="admin" dominant-baseline="central">' . $first . '</text></svg>');
         $value = 'data:image/svg+xml;base64,' . $src;
         return $value;
     }
@@ -360,5 +401,61 @@ if (!function_exists('hsv2rgb')) {
             floor($g * 255),
             floor($b * 255)
         ];
+    }
+}
+
+if (!function_exists('check_nav_active')) {
+    /**
+     * 检测会员中心导航是否高亮
+     */
+    function check_nav_active($url, $classname = 'active')
+    {
+        $auth = \app\common\library\Auth::instance();
+        $requestUrl = $auth->getRequestUri();
+        $url = ltrim($url, '/');
+        return $requestUrl === str_replace(".", "/", $url) ? $classname : '';
+    }
+}
+
+if (!function_exists('check_cors_request')) {
+    /**
+     * 跨域检测
+     */
+    function check_cors_request()
+    {
+        if (isset($_SERVER['HTTP_ORIGIN']) && $_SERVER['HTTP_ORIGIN']) {
+            $info = parse_url($_SERVER['HTTP_ORIGIN']);
+            $domainArr = explode(',', config('fastadmin.cors_request_domain'));
+            $domainArr[] = request()->host(true);
+            if (in_array("*", $domainArr) || in_array($_SERVER['HTTP_ORIGIN'], $domainArr) || (isset($info['host']) && in_array($info['host'], $domainArr))) {
+                header("Access-Control-Allow-Origin: " . $_SERVER['HTTP_ORIGIN']);
+            } else {
+                header('HTTP/1.1 403 Forbidden');
+                exit;
+            }
+
+            header('Access-Control-Allow-Credentials: true');
+            header('Access-Control-Max-Age: 86400');
+
+            if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+                if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'])) {
+                    header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+                }
+                if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'])) {
+                    header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
+                }
+                exit;
+            }
+        }
+    }
+}
+
+if (!function_exists('xss_clean')) {
+    /**
+     * 清理XSS
+     */
+    function xss_clean($content, $is_image = false)
+    {
+        return \app\common\library\Security::instance()->xss_clean($content, $is_image);
     }
 }

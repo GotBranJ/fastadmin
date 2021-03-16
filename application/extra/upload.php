@@ -21,9 +21,17 @@ return [
     /**
      * 可上传的文件类型
      */
-    'mimetype'  => 'jpg,png,bmp,jpeg,gif,zip,rar,xls,xlsx',
+    'mimetype'  => 'jpg,png,bmp,jpeg,gif,zip,rar,xls,xlsx,wav,mp4,mp3,pdf',
     /**
      * 是否支持批量上传
      */
     'multiple'  => false,
+    /**
+     * 是否支持分片上传
+     */
+    'chunking'  => false,
+    /**
+     * 默认分片大小
+     */
+    'chunksize' => 2097152,
 ];
